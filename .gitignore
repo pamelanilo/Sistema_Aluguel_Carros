@@ -1,0 +1,24 @@
+# Configuracoes locais e credenciais
+.env
+.env.*
+!.env.example
+application-local.properties
+
+# Java e Maven
+*.class
+*.log
+target/
+**/target/
+
+# Node e React
+node_modules/
+dist/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

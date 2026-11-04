@@ -4,6 +4,7 @@ import br.com.aluguelcarros.backend.dto.PedidoRequest;
 import br.com.aluguelcarros.backend.model.Pedido;
 import br.com.aluguelcarros.backend.service.PedidoService;
 import org.springframework.web.bind.annotation.*;
+import br.com.aluguelcarros.backend.dto.AvaliacaoRequest;
 
 import java.util.List;
 
@@ -32,4 +33,29 @@ public class PedidoController {
     public Pedido buscar(@PathVariable Long id) {
         return pedidoService.buscarPorId(id);
     }
+
+    @PutMapping("/{id}")
+public Pedido atualizar(
+        @PathVariable Long id,
+        @RequestBody PedidoRequest dados) {
+
+    return pedidoService.atualizar(id, dados);
+}
+
+@PatchMapping("/{id}/cancelar")
+public Pedido cancelar(@PathVariable Long id) {
+    return pedidoService.cancelar(id);
+}
+
+@PatchMapping("/{id}/avaliar")
+public Pedido avaliar(
+        @PathVariable Long id,
+        @RequestBody AvaliacaoRequest dados) {
+
+    return pedidoService.avaliar(
+            id,
+            dados.getParecer(),
+            dados.getStatus()
+    );
+}
 }

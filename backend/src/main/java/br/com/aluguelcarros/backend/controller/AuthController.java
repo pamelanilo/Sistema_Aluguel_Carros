@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,11 +49,13 @@ public class AuthController {
                     .body(Map.of("mensagem", "Login ou senha incorretos"));
         }
 
+        String perfil = usuario instanceof br.com.aluguelcarros.backend.model.Cliente
+                ? "ROLE_CLIENTE" : "ROLE_AGENTE";
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(
                         usuario.getLogin(),
                         null,
-                        Collections.emptyList()
+                        Collections.singletonList(new SimpleGrantedAuthority(perfil))
                 );
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -70,29 +73,25 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-        public ResponseEntity<?> usuarioLogado(Authentication authentication) {
-
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("mensagem", "Usuário não autenticado"));
-            }
-
-            Usuario usuario = usuarioRepository
-                    .findByLogin(authentication.getName())
-                    .orElse(null);
-
-            if (usuario == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("mensagem", "Usuário não encontrado"));
-            }
-
-            return ResponseEntity.ok(Map.of(
-                    "id", usuario.getId(),
-                    "nome", usuario.getNome(),
-                    "login", usuario.getLogin(),
-                    "tipo", usuario.getClass().getSimpleName()
-            ));
+    public ResponseEntity<?> usuarioLogado(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("mensagem", "Usuário não autenticado"));
         }
+
+        Usuario usuario = usuarioRepository.findByLogin(authentication.getName()).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("mensagem", "Usuário não encontrado"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "id", usuario.getId(),
+                "nome", usuario.getNome(),
+                "login", usuario.getLogin(),
+                "tipo", usuario.getClass().getSimpleName()
+        ));
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(

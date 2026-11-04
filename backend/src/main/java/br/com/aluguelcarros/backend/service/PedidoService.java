@@ -35,11 +35,16 @@ public class PedidoService {
     }
 
     // Criar um novo pedido
-    public PedidoResponse criar(PedidoRequest dados) {
+    public PedidoResponse criar(PedidoRequest dados, String loginAutenticado) {
 
-        Cliente cliente = clienteRepository.findById(dados.getClienteId())
-                .orElseThrow(() ->
-                        new RuntimeException("Cliente não encontrado"));
+        Cliente cliente = clienteRepository.findByLogin(loginAutenticado)
+                .orElseThrow(() -> new RuntimeException("Cliente autenticado não encontrado"));
+
+        if (dados.getDataInicio() == null || dados.getDataFim() == null
+                || !dados.getDataInicio().isAfter(LocalDate.now().minusDays(1))
+                || !dados.getDataFim().isAfter(dados.getDataInicio())) {
+            throw new RuntimeException("Informe datas válidas: retirada a partir de hoje e devolução posterior.");
+        }
 
         Automovel automovel = automovelRepository.findById(dados.getAutomovelId())
                 .orElseThrow(() ->
@@ -60,19 +65,21 @@ public class PedidoService {
 
     // Listar todos os pedidos
     public List<PedidoResponse> listarTodos() {
-        return pedidoRepository.findAll()
-                .stream()
-                .map(PedidoResponse::new)
-                .toList();
+        return pedidoRepository.findAll().stream().map(PedidoResponse::new).toList();
+    }
+
+    public List<PedidoResponse> listarDoCliente(String login) {
+        return pedidoRepository.findByCliente_Login(login).stream()
+                .map(PedidoResponse::new).toList();
     }
 
     // Buscar um pedido pelo ID
-    public PedidoResponse buscarPorId(Long id) {
-
-        Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Pedido não encontrado"));
-
+    public PedidoResponse buscarPorId(Long id, String loginAutenticado, boolean agente) {
+        Pedido pedido = buscarEntidadePorId(id);
+        if (!agente && (pedido.getCliente() == null
+                || !pedido.getCliente().getLogin().equals(loginAutenticado))) {
+            throw new RuntimeException("Você não tem permissão para consultar este pedido.");
+        }
         return new PedidoResponse(pedido);
     }
 
@@ -99,10 +106,15 @@ public class PedidoService {
     }
 
     // Cancelar um pedido
-    public PedidoResponse cancelar(Long id) {
+    public PedidoResponse cancelar(Long id, String loginAutenticado) {
 
         Pedido pedido = buscarEntidadePorId(id);
-
+        if (pedido.getCliente() == null || !pedido.getCliente().getLogin().equals(loginAutenticado)) {
+            throw new RuntimeException("Você não tem permissão para cancelar este pedido.");
+        }
+        if (pedido.getStatus() != StatusPedido.PENDENTE && pedido.getStatus() != StatusPedido.EM_ANALISE) {
+            throw new RuntimeException("Somente pedidos pendentes ou em análise podem ser cancelados.");
+        }
         pedido.setStatus(StatusPedido.CANCELADO);
 
         return new PedidoResponse(pedidoRepository.save(pedido));
@@ -113,6 +125,9 @@ public class PedidoService {
 
         Pedido pedido = buscarEntidadePorId(id);
 
+        if (pedido.getStatus() == StatusPedido.CANCELADO) {
+            throw new RuntimeException("Não é possível avaliar um pedido cancelado.");
+        }
         if (status != StatusPedido.APROVADO
                 && status != StatusPedido.REPROVADO) {
 

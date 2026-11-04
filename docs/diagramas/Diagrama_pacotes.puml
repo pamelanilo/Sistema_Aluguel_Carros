@@ -7,8 +7,7 @@ title Sistema de Aluguel de Carros - Diagrama de Pacotes (Visão Lógica)
 
 package "Frontend (React + Vite)" as FE {
   package "pages" as FE_PAGES
-  package "components" as FE_COMP
-  package "services" as FE_SERV
+  package "api.js" as FE_API
 }
 
 package "Backend (Spring Boot)" as BE {
@@ -26,10 +25,9 @@ package "Backend (Spring Boot)" as BE {
 
 database "Supabase\n(PostgreSQL)" as DB
 
-FE_PAGES ..> FE_COMP : usa
-FE_PAGES ..> FE_SERV : usa
+FE_PAGES ..> FE_API : utiliza
 
-FE_SERV ..> CTRL : <<HTTP / REST (JSON)>>
+FE_API ..> CTRL : <<HTTP / REST (JSON)>>
 
 CTRL ..> SERV
 CTRL ..> DTO

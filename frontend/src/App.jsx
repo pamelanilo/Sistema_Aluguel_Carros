@@ -13,14 +13,14 @@ export default function App() {
   // Ao abrir o site, pergunta ao backend se já existe login ativo
   useEffect(() => {
     api.eu()
-      .then((u) => { setUsuario(u); setTela(u.tipo === 'CLIENTE' ? 'carros' : 'pedidos') })
+      .then((u) => { setUsuario(u); setTela(u.tipo === 'Cliente' ? 'carros' : 'pedidos') })
       .catch(() => {})
       .finally(() => setCarregando(false))
   }, [])
 
   function entrou(u) {
     setUsuario(u)
-    setTela(u.tipo === 'CLIENTE' ? 'carros' : 'pedidos')
+    setTela(u.tipo === 'Cliente' ? 'carros' : 'pedidos')
   }
 
   async function sair() {
@@ -31,7 +31,7 @@ export default function App() {
 
   if (carregando) return <p className="centro">Carregando...</p>
 
-  const ehCliente = usuario && usuario.tipo === 'CLIENTE'
+  const ehCliente = usuario && usuario.tipo === 'Cliente'
 
   return (
     <>

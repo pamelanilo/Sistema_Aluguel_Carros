@@ -4,7 +4,7 @@ import { api } from '../api'
 export default function Pedidos({ usuario }) {
   const [pedidos, setPedidos] = useState([])
   const [erro, setErro] = useState('')
-  const ehCliente = usuario.tipo === 'CLIENTE'
+  const ehCliente = usuario.tipo === 'Cliente'
 
   function carregar() {
     api.listarPedidos().then(setPedidos).catch((e) => setErro(e.message))
@@ -28,10 +28,11 @@ export default function Pedidos({ usuario }) {
         {pedidos.map((p) => (
           <div className="pedido" key={p.id}>
             <div>
-              <strong>Pedido #{p.id} — {p.automovel?.marca} {p.automovel?.modelo}</strong>
+              <strong>Pedido #{p.id} — {p.marca} {p.modelo}</strong>
               <p className="detalhe">
                 {p.dataInicio} até {p.dataFim}
-                {!ehCliente && p.cliente ? ' · Cliente: ' + p.cliente.nome : ''}
+                {p.parecerFinanceiro ? ' · Parecer: ' + p.parecerFinanceiro : ''}
+                {!ehCliente && p.clienteNome ? ' · Cliente: ' + p.clienteNome : ''}
               </p>
             </div>
             <span className={'status ' + String(p.status).toLowerCase()}>{p.status}</span>

@@ -6,6 +6,7 @@ import br.com.aluguelcarros.backend.dto.AvaliacaoRequest;
 import br.com.aluguelcarros.backend.service.PedidoService;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -21,18 +22,23 @@ public class PedidoController {
     }
 
     @PostMapping
-    public PedidoResponse criar(@RequestBody PedidoRequest dados) {
-        return pedidoService.criar(dados);
+    public PedidoResponse criar(@RequestBody PedidoRequest dados, Authentication authentication) {
+        return pedidoService.criar(dados, authentication.getName());
     }
 
     @GetMapping
-    public List<PedidoResponse> listar() {
-        return pedidoService.listarTodos();
+    public List<PedidoResponse> listar(Authentication authentication) {
+        boolean agente = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AGENTE"));
+        return agente ? pedidoService.listarTodos()
+                : pedidoService.listarDoCliente(authentication.getName());
     }
 
     @GetMapping("/{id}")
-    public PedidoResponse buscar(@PathVariable Long id) {
-        return pedidoService.buscarPorId(id);
+    public PedidoResponse buscar(@PathVariable Long id, Authentication authentication) {
+        boolean agente = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AGENTE"));
+        return pedidoService.buscarPorId(id, authentication.getName(), agente);
     }
 
     @PutMapping("/{id}")
@@ -44,8 +50,8 @@ public class PedidoController {
     }
 
     @PatchMapping("/{id}/cancelar")
-    public PedidoResponse cancelar(@PathVariable Long id) {
-        return pedidoService.cancelar(id);
+    public PedidoResponse cancelar(@PathVariable Long id, Authentication authentication) {
+        return pedidoService.cancelar(id, authentication.getName());
     }
 
     @PatchMapping("/{id}/avaliar")

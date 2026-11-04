@@ -8,7 +8,7 @@ efetuar, cancelar e modificar pedidos de aluguel pela Internet.
 
 ## Integrantes
 
-- [Seu nome]
+- Pamela Fernandes Nilo
 
 ## Professor
 
@@ -55,13 +55,15 @@ O front-end em React + Vite consome a API REST do back-end.
 
 ## Funcionalidades
 
-- [ ] Cadastro de usuários
-- [ ] Login (clientes e agentes)
-- [ ] CRUD de cliente
-- [ ] Criar pedido de aluguel
-- [ ] Consultar status do pedido
-- [ ] Cancelar e modificar pedido
-- [ ] Avaliação do pedido pelo agente
+- [x] Cadastro de clientes
+- [x] Login e logout de usuários
+- [x] Cadastro e consulta de clientes
+- [x] Criar pedido de aluguel
+- [x] Consultar pedidos e status
+- [x] Cancelar pedido
+- [x] Avaliação do pedido pelo agente
+- [ ] Edição de pedidos pelo cliente na interface
+- [ ] Controle completo de autorização por perfil e propriedade dos registros
 
 ## Estrutura de pastas
 
@@ -99,6 +101,10 @@ Sistema_Aluguel_Carros/
 
    ```bash
    cd backend
+   # Windows PowerShell:
+   .\mvnw.cmd spring-boot:run
+
+   # Linux / macOS:
    ./mvnw spring-boot:run
    ```
 

@@ -23,6 +23,9 @@ export const api = {
   listarCarros: () => chamar('/automoveis'),
   listarPedidos: () => chamar('/pedidos'),
   criarPedido: (pedido) => chamar('/pedidos', 'POST', pedido),
-  cancelarPedido: (id) => chamar('/pedidos/' + id, 'DELETE'),
-  avaliarPedido: (id, aprovado) => chamar('/pedidos/' + id + '/avaliacao', 'PUT', { aprovado }),
+  cancelarPedido: (id) => chamar('/pedidos/' + id + '/cancelar', 'PATCH'),
+  avaliarPedido: (id, aprovado) => chamar('/pedidos/' + id + '/avaliar', 'PATCH', {
+    status: aprovado ? 'APROVADO' : 'REPROVADO',
+    parecer: aprovado ? 'Pedido aprovado pelo agente.' : 'Pedido reprovado pelo agente.'
+  }),
 }

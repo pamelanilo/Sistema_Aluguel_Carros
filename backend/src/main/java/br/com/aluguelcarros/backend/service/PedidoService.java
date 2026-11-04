@@ -1,7 +1,7 @@
-
 package br.com.aluguelcarros.backend.service;
 
 import br.com.aluguelcarros.backend.dto.PedidoRequest;
+import br.com.aluguelcarros.backend.dto.PedidoResponse;
 import br.com.aluguelcarros.backend.model.Pedido;
 import br.com.aluguelcarros.backend.model.Cliente;
 import br.com.aluguelcarros.backend.model.Automovel;
@@ -11,11 +11,13 @@ import br.com.aluguelcarros.backend.repository.ClienteRepository;
 import br.com.aluguelcarros.backend.repository.AutomovelRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Transactional
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
@@ -33,7 +35,7 @@ public class PedidoService {
     }
 
     // Criar um novo pedido
-    public Pedido criar(PedidoRequest dados) {
+    public PedidoResponse criar(PedidoRequest dados) {
 
         Cliente cliente = clienteRepository.findById(dados.getClienteId())
                 .orElseThrow(() ->
@@ -53,26 +55,31 @@ public class PedidoService {
         pedido.setValorTotal(dados.getValorTotal());
         pedido.setStatus(StatusPedido.PENDENTE);
 
-        return pedidoRepository.save(pedido);
+        return new PedidoResponse(pedidoRepository.save(pedido));
     }
 
     // Listar todos os pedidos
-    public List<Pedido> listarTodos() {
-        return pedidoRepository.findAll();
+    public List<PedidoResponse> listarTodos() {
+        return pedidoRepository.findAll()
+                .stream()
+                .map(PedidoResponse::new)
+                .toList();
     }
 
     // Buscar um pedido pelo ID
-    public Pedido buscarPorId(Long id) {
+    public PedidoResponse buscarPorId(Long id) {
 
-        return pedidoRepository.findById(id)
+        Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException("Pedido não encontrado"));
+
+        return new PedidoResponse(pedido);
     }
 
     // Atualizar um pedido
-    public Pedido atualizar(Long id, PedidoRequest dados) {
+    public PedidoResponse atualizar(Long id, PedidoRequest dados) {
 
-        Pedido pedido = buscarPorId(id);
+        Pedido pedido = buscarEntidadePorId(id);
 
         Cliente cliente = clienteRepository.findById(dados.getClienteId())
                 .orElseThrow(() ->
@@ -88,23 +95,23 @@ public class PedidoService {
         pedido.setDataFim(dados.getDataFim());
         pedido.setValorTotal(dados.getValorTotal());
 
-        return pedidoRepository.save(pedido);
+        return new PedidoResponse(pedidoRepository.save(pedido));
     }
 
     // Cancelar um pedido
-    public Pedido cancelar(Long id) {
+    public PedidoResponse cancelar(Long id) {
 
-        Pedido pedido = buscarPorId(id);
+        Pedido pedido = buscarEntidadePorId(id);
 
         pedido.setStatus(StatusPedido.CANCELADO);
 
-        return pedidoRepository.save(pedido);
+        return new PedidoResponse(pedidoRepository.save(pedido));
     }
 
     // Avaliar um pedido
-    public Pedido avaliar(Long id, String parecer, StatusPedido status) {
+    public PedidoResponse avaliar(Long id, String parecer, StatusPedido status) {
 
-        Pedido pedido = buscarPorId(id);
+        Pedido pedido = buscarEntidadePorId(id);
 
         if (status != StatusPedido.APROVADO
                 && status != StatusPedido.REPROVADO) {
@@ -115,6 +122,14 @@ public class PedidoService {
         pedido.setParecerFinanceiro(parecer);
         pedido.setStatus(status);
 
-        return pedidoRepository.save(pedido);
+        return new PedidoResponse(pedidoRepository.save(pedido));
+    }
+
+    // Buscar a entidade para operações internas
+    private Pedido buscarEntidadePorId(Long id) {
+
+        return pedidoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Pedido não encontrado"));
     }
 }

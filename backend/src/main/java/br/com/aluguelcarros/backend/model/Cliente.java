@@ -58,4 +58,18 @@ public class Cliente extends Usuario {
     public List<Rendimento> getRendimentos() {
         return rendimentos;
     }
+
+    public void adicionarRendimento(Rendimento rendimento) {
+        if (rendimento == null) {
+            throw new IllegalArgumentException("O rendimento não pode ser nulo.");
+        }
+
+        if (rendimentos.size() >= 3) {
+            throw new IllegalArgumentException(
+                    "O cliente pode possuir no máximo 3 rendimentos.");
+        }
+
+        rendimento.setCliente(this);
+        rendimentos.add(rendimento);
+    }
 }

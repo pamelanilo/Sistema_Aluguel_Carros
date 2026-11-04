@@ -1,8 +1,9 @@
-
 package br.com.aluguelcarros.backend.service;
 
 import br.com.aluguelcarros.backend.dto.ContratoAluguelRequest;
 import br.com.aluguelcarros.backend.dto.ContratoCreditoRequest;
+import br.com.aluguelcarros.backend.dto.ContratoAluguelResponse;
+import br.com.aluguelcarros.backend.dto.ContratoCreditoResponse;
 
 import br.com.aluguelcarros.backend.model.ContratoAluguel;
 import br.com.aluguelcarros.backend.model.ContratoCredito;
@@ -17,10 +18,13 @@ import br.com.aluguelcarros.backend.repository.PedidoRepository;
 import br.com.aluguelcarros.backend.repository.AgenteBancoRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
+@Transactional
 public class ContratoService {
 
     private final ContratoAluguelRepository contratoAluguelRepository;
@@ -40,7 +44,6 @@ public class ContratoService {
         this.agenteBancoRepository = agenteBancoRepository;
     }
 
-    // Criar contrato de aluguel
     public ContratoAluguel criarContratoAluguel(
             ContratoAluguelRequest dados) {
 
@@ -67,7 +70,6 @@ public class ContratoService {
         return contratoAluguelRepository.save(contrato);
     }
 
-    // Criar contrato de crédito
     public ContratoCredito criarContratoCredito(
             ContratoCreditoRequest dados) {
 
@@ -75,7 +77,8 @@ public class ContratoService {
                 contratoAluguelRepository.findById(
                         dados.getContratoAluguelId())
                 .orElseThrow(() ->
-                        new RuntimeException("Contrato de aluguel não encontrado"));
+                        new RuntimeException(
+                                "Contrato de aluguel não encontrado"));
 
         if (contratoAluguel.getContratoCredito() != null) {
             throw new RuntimeException(
@@ -85,7 +88,8 @@ public class ContratoService {
         AgenteBanco banco = agenteBancoRepository.findById(
                 dados.getAgenteBancoId())
                 .orElseThrow(() ->
-                        new RuntimeException("Agente bancário não encontrado"));
+                        new RuntimeException(
+                                "Agente bancário não encontrado"));
 
         ContratoCredito credito = new ContratoCredito();
 
@@ -96,5 +100,37 @@ public class ContratoService {
         credito.setParcelas(dados.getParcelas());
 
         return contratoCreditoRepository.save(credito);
+    }
+
+    public List<ContratoAluguelResponse> listarContratosAluguel() {
+        return contratoAluguelRepository.findAll()
+                .stream()
+                .map(ContratoAluguelResponse::from)
+                .toList();
+    }
+
+    public ContratoAluguelResponse buscarContratoAluguel(Long id) {
+        ContratoAluguel contrato = contratoAluguelRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Contrato de aluguel não encontrado"));
+
+        return ContratoAluguelResponse.from(contrato);
+    }
+
+    public List<ContratoCreditoResponse> listarContratosCredito() {
+        return contratoCreditoRepository.findAll()
+                .stream()
+                .map(ContratoCreditoResponse::from)
+                .toList();
+    }
+
+    public ContratoCreditoResponse buscarContratoCredito(Long id) {
+        ContratoCredito credito = contratoCreditoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Contrato de crédito não encontrado"));
+
+        return ContratoCreditoResponse.from(credito);
     }
 }

@@ -1,5 +1,6 @@
 package br.com.aluguelcarros.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import br.com.aluguelcarros.backend.model.enums.TipoContrato;
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ public class ContratoAluguel {
     @Enumerated(EnumType.STRING)
     private TipoContrato tipo;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "pedido_id", unique = true)
     private Pedido pedido;

@@ -1,5 +1,6 @@
 package br.com.aluguelcarros.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
@@ -18,7 +19,7 @@ public class Rendimento {
     private BigDecimal valor;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cliente_id" , nullable=false)
+    @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
     public Long getId() {
@@ -41,6 +42,7 @@ public class Rendimento {
         this.valor = valor;
     }
 
+    @JsonIgnore
     public Cliente getCliente() {
         return cliente;
     }

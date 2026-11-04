@@ -20,7 +20,6 @@ import java.util.Collections;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AuthController {
 
     private final UsuarioRepository usuarioRepository;
@@ -39,8 +38,12 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response) {
 
-        String login = dados.get("login");
-        String senha = dados.get("senha");
+        String login = dados == null ? null : dados.get("login");
+        String senha = dados == null ? null : dados.get("senha");
+        if (login == null || login.isBlank() || senha == null || senha.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("mensagem", "Informe login e senha"));
+        }
 
         Usuario usuario = usuarioRepository.findByLogin(login).orElse(null);
 

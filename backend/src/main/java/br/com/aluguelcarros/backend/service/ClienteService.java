@@ -38,6 +38,14 @@ public class ClienteService {
     @Transactional
     public Cliente cadastrar(Cliente cliente) {
         validarRendimentos(cliente.getRendimentos());
+        cliente.setCpf(validarCpf(cliente.getCpf()));
+        if (clienteRepository.existsByCpf(cliente.getCpf())) {
+            throw new IllegalArgumentException("Já existe um cliente cadastrado com este CPF.");
+        }
+        if (cliente.getLogin() == null || cliente.getLogin().isBlank()
+                || clienteRepository.existsByLogin(cliente.getLogin())) {
+            throw new IllegalArgumentException("Login inválido ou já utilizado.");
+        }
 
         if (cliente.getSenha() == null || cliente.getSenha().isBlank()) {
             throw new IllegalArgumentException("A senha é obrigatória.");
@@ -59,6 +67,14 @@ public class ClienteService {
         Cliente cliente = buscarPorId(id);
 
         validarRendimentos(dados.getRendimentos());
+        dados.setCpf(validarCpf(dados.getCpf()));
+        if (clienteRepository.existsByCpfAndIdNot(dados.getCpf(), id)) {
+            throw new IllegalArgumentException("Já existe outro cliente com este CPF.");
+        }
+        if (dados.getLogin() == null || dados.getLogin().isBlank()
+                || clienteRepository.existsByLoginAndIdNot(dados.getLogin(), id)) {
+            throw new IllegalArgumentException("Login inválido ou já utilizado por outro usuário.");
+        }
 
         cliente.setNome(dados.getNome());
         cliente.setLogin(dados.getLogin());
@@ -85,6 +101,25 @@ public class ClienteService {
         }
 
         return clienteRepository.save(cliente);
+    }
+
+    // Normaliza (somente dígitos) e valida os dígitos verificadores do CPF.
+    private String validarCpf(String cpf) {
+        String d = cpf == null ? "" : cpf.replaceAll("\\D", "");
+        if (d.length() != 11 || d.chars().distinct().count() == 1) {
+            throw new IllegalArgumentException("CPF inválido.");
+        }
+        for (int t = 9; t < 11; t++) {
+            int soma = 0;
+            for (int i = 0; i < t; i++) {
+                soma += (d.charAt(i) - '0') * (t + 1 - i);
+            }
+            int dv = (soma * 10) % 11 % 10;
+            if (dv != d.charAt(t) - '0') {
+                throw new IllegalArgumentException("CPF inválido.");
+            }
+        }
+        return d;
     }
 
     private void validarRendimentos(List<Rendimento> rendimentos) {

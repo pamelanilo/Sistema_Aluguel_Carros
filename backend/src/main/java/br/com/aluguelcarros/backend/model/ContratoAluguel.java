@@ -18,6 +18,9 @@ public class ContratoAluguel {
     @Enumerated(EnumType.STRING)
     private TipoContrato tipo;
 
+    @Enumerated(EnumType.STRING)
+    private br.com.aluguelcarros.backend.model.enums.StatusContrato status;
+
     @JsonIgnore
     @OneToOne
     @JoinColumn(name = "pedido_id", unique = true)
@@ -36,6 +39,14 @@ public class ContratoAluguel {
 
     public void setDataAssinatura(LocalDate dataAssinatura) {
         this.dataAssinatura = dataAssinatura;
+    }
+
+    public br.com.aluguelcarros.backend.model.enums.StatusContrato getStatus() {
+        return status;
+    }
+
+    public void setStatus(br.com.aluguelcarros.backend.model.enums.StatusContrato status) {
+        this.status = status;
     }
 
     public TipoContrato getTipo() {

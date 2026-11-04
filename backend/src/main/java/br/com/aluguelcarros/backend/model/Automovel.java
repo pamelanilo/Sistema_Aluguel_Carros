@@ -1,6 +1,7 @@
 package br.com.aluguelcarros.backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "automoveis")
@@ -73,8 +74,19 @@ public class Automovel {
         this.placa = placa;
     }
 
+    @JsonIgnore
     public Usuario getProprietario() {
         return proprietario;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("proprietarioId")
+    public Long getProprietarioId() {
+        return proprietario == null ? null : proprietario.getId();
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("proprietarioNome")
+    public String getProprietarioNome() {
+        return proprietario == null ? null : proprietario.getNome();
     }
 
     public void setProprietario(Usuario proprietario) {

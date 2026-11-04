@@ -33,6 +33,23 @@ public class TratadorDeExcecoes {
         return problema;
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ProblemDetail statusExplicito(org.springframework.web.server.ResponseStatusException ex) {
+        return ProblemDetail.forStatusAndDetail(ex.getStatusCode(),
+                ex.getReason() == null ? "Operação não permitida." : ex.getReason());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail argumentoInvalido(IllegalArgumentException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ProblemDetail regraNaoTratada(RuntimeException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                ex.getMessage() == null ? "Não foi possível concluir a operação." : ex.getMessage());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail integridade(DataIntegrityViolationException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,

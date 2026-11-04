@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AgenteBancoRepository
         extends JpaRepository<AgenteBanco, Long> {
+    java.util.Optional<AgenteBanco> findByLogin(String login);
 }

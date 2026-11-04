@@ -2,8 +2,7 @@
 skinparam shadowing false
 skinparam DefaultFontName Arial
 skinparam classAttributeIconSize 0
-
-title Sistema de Aluguel de Carros - Diagrama de Classes
+title VRUM! - Diagrama de Classes (Model)
 
 abstract class Usuario {
   - id : Long
@@ -11,32 +10,26 @@ abstract class Usuario {
   - senha : String
   - nome : String
 }
-
 class Cliente {
   - rg : String
   - cpf : String
   - endereco : String
   - profissao : String
 }
-
 class Rendimento {
   - id : Long
   - entidadeEmpregadora : String
   - valor : BigDecimal
 }
-
 abstract class Agente {
   - cnpj : String
 }
-
 class AgenteEmpresa {
   - razaoSocial : String
 }
-
 class AgenteBanco {
   - codigoBanco : String
 }
-
 class Automovel {
   - id : Long
   - matricula : String
@@ -45,7 +38,6 @@ class Automovel {
   - modelo : String
   - placa : String
 }
-
 class Pedido {
   - id : Long
   - dataCriacao : LocalDate
@@ -55,20 +47,18 @@ class Pedido {
   - status : StatusPedido
   - parecerFinanceiro : String
 }
-
 class ContratoAluguel {
   - id : Long
   - dataAssinatura : LocalDate
   - tipo : TipoContrato
+  - status : StatusContrato
 }
-
 class ContratoCredito {
   - id : Long
   - valorConcedido : BigDecimal
   - taxaJuros : BigDecimal
   - parcelas : int
 }
-
 enum StatusPedido {
   PENDENTE
   EM_ANALISE
@@ -76,7 +66,10 @@ enum StatusPedido {
   REPROVADO
   CANCELADO
 }
-
+enum StatusContrato {
+  ASSINADO
+  EXECUTADO
+}
 enum TipoContrato {
   PROPRIEDADE_CLIENTE
   PROPRIEDADE_EMPRESA
@@ -87,31 +80,29 @@ Usuario <|-- Cliente
 Usuario <|-- Agente
 Agente <|-- AgenteEmpresa
 Agente <|-- AgenteBanco
-
-Cliente "1" *-- "0..3" Rendimento : possui >
-
-Cliente "1" -- "0..*" Pedido : introduz >
-Agente "0..1" -- "0..*" Pedido : avalia >
-Pedido "0..*" -- "1" Automovel : refere-se a >
-Pedido "1" -- "0..1" ContratoAluguel : gera >
-
-Usuario "1" -- "0..*" Automovel : é proprietário de >
-
-ContratoAluguel "1" -- "0..1" ContratoCredito : financiado por >
-AgenteBanco "1" -- "0..*" ContratoCredito : concede >
-
+Cliente "1" *-- "0..3" Rendimento : possui
+Cliente "1" -- "0..*" Pedido : solicita
+Agente "0..1" -- "0..*" Pedido : analisa/avalia
+Pedido "0..*" -- "1" Automovel : seleciona
+Pedido "1" -- "0..1" ContratoAluguel : origina
+Usuario "1" -- "0..*" Automovel : proprietário
+ContratoAluguel "1" -- "0..1" ContratoCredito : pode possuir
+AgenteBanco "1" -- "0..*" ContratoCredito : concede
 Pedido --> StatusPedido
 ContratoAluguel --> TipoContrato
+ContratoAluguel --> StatusContrato
 
 note right of Rendimento
-  Regra de negócio: no máximo
-  3 rendimentos por cliente
+  Regra: no máximo três rendimentos
+  por cliente.
 end note
-
 note bottom of Automovel
-  O proprietário pode ser Cliente,
-  AgenteEmpresa ou AgenteBanco,
-  todos são Usuario
+  O proprietário é um Usuario (Cliente,
+  AgenteEmpresa ou AgenteBanco) e é
+  atualizado ao gerar o contrato de aluguel.
 end note
-
+note bottom of Pedido
+  PENDENTE -> EM_ANALISE -> APROVADO | REPROVADO
+  Cancelamento: PENDENTE ou EM_ANALISE.
+end note
 @enduml

@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/automoveis")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AutomovelController {
 
     private final AutomovelService automovelService;

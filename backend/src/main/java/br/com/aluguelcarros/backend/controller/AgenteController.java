@@ -14,10 +14,24 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/agentes")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AgenteController {
 
     private final AgenteService agenteService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.setup-token:}")
+    private String setupToken;
+
+    // Criação de agentes: somente agente autenticado ou portador do token de instalação.
+    private void autorizarCriacao(String token, org.springframework.security.core.Authentication auth) {
+        boolean agente = auth != null && auth.isAuthenticated() && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AGENTE"));
+        boolean tokenOk = setupToken != null && !setupToken.isBlank() && setupToken.equals(token);
+        if (!agente && !tokenOk) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN,
+                    "Criação de agentes exige agente autenticado ou X-Setup-Token válido.");
+        }
+    }
 
     public AgenteController(AgenteService agenteService) {
         this.agenteService = agenteService;
@@ -26,7 +40,10 @@ public class AgenteController {
     // Cadastrar agente empresarial
     @PostMapping("/empresas")
     public AgenteEmpresa cadastrarEmpresa(
-            @RequestBody AgenteEmpresaRequest dados) {
+            @RequestBody AgenteEmpresaRequest dados,
+            @RequestHeader(value = "X-Setup-Token", required = false) String token,
+            org.springframework.security.core.Authentication auth) {
+        autorizarCriacao(token, auth);
 
         return agenteService.cadastrarEmpresa(dados);
     }
@@ -34,7 +51,10 @@ public class AgenteController {
     // Cadastrar agente bancário
     @PostMapping("/bancos")
     public AgenteBanco cadastrarBanco(
-            @RequestBody AgenteBancoRequest dados) {
+            @RequestBody AgenteBancoRequest dados,
+            @RequestHeader(value = "X-Setup-Token", required = false) String token,
+            org.springframework.security.core.Authentication auth) {
+        autorizarCriacao(token, auth);
 
         return agenteService.cadastrarBanco(dados);
     }

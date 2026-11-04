@@ -9,6 +9,7 @@ import br.com.aluguelcarros.backend.model.enums.StatusPedido;
 import br.com.aluguelcarros.backend.repository.PedidoRepository;
 import br.com.aluguelcarros.backend.repository.ClienteRepository;
 import br.com.aluguelcarros.backend.repository.AutomovelRepository;
+import br.com.aluguelcarros.backend.repository.AgenteRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,15 +24,18 @@ public class PedidoService {
     private final PedidoRepository pedidoRepository;
     private final ClienteRepository clienteRepository;
     private final AutomovelRepository automovelRepository;
+    private final AgenteRepository agenteRepository;
 
     public PedidoService(
             PedidoRepository pedidoRepository,
             ClienteRepository clienteRepository,
-            AutomovelRepository automovelRepository) {
+            AutomovelRepository automovelRepository,
+            AgenteRepository agenteRepository) {
 
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.automovelRepository = automovelRepository;
+        this.agenteRepository = agenteRepository;
     }
 
     // Criar um novo pedido
@@ -83,20 +87,27 @@ public class PedidoService {
         return new PedidoResponse(pedido);
     }
 
-    // Atualizar um pedido
-    public PedidoResponse atualizar(Long id, PedidoRequest dados) {
-
+    // Cliente pode alterar o próprio pedido enquanto pendente; agente pode atualizar durante a análise.
+    public PedidoResponse atualizar(Long id, PedidoRequest dados, String loginAutenticado, boolean agente) {
         Pedido pedido = buscarEntidadePorId(id);
 
-        Cliente cliente = clienteRepository.findById(dados.getClienteId())
-                .orElseThrow(() ->
-                        new RuntimeException("Cliente não encontrado"));
+        if (!agente && (pedido.getCliente() == null
+                || !pedido.getCliente().getLogin().equals(loginAutenticado))) {
+            throw new RuntimeException("Você não tem permissão para alterar este pedido.");
+        }
+        if (pedido.getStatus() != StatusPedido.PENDENTE
+                && pedido.getStatus() != StatusPedido.EM_ANALISE) {
+            throw new RuntimeException("Somente pedidos pendentes ou em análise podem ser alterados.");
+        }
+        if (dados.getDataInicio() == null || dados.getDataFim() == null
+                || dados.getDataInicio().isBefore(LocalDate.now())
+                || !dados.getDataFim().isAfter(dados.getDataInicio())) {
+            throw new RuntimeException("Informe datas válidas: retirada a partir de hoje e devolução posterior.");
+        }
 
         Automovel automovel = automovelRepository.findById(dados.getAutomovelId())
-                .orElseThrow(() ->
-                        new RuntimeException("Automóvel não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Automóvel não encontrado"));
 
-        pedido.setCliente(cliente);
         pedido.setAutomovel(automovel);
         pedido.setDataInicio(dados.getDataInicio());
         pedido.setDataFim(dados.getDataFim());
@@ -120,13 +131,26 @@ public class PedidoService {
         return new PedidoResponse(pedidoRepository.save(pedido));
     }
 
+    // Iniciar a análise financeira (PENDENTE -> EM_ANALISE)
+    public PedidoResponse iniciarAnalise(Long id, String loginAgente) {
+        Pedido pedido = buscarEntidadePorId(id);
+        if (pedido.getStatus() != StatusPedido.PENDENTE) {
+            throw new RuntimeException("Somente pedidos pendentes podem entrar em análise.");
+        }
+        var agente = agenteRepository.findByLogin(loginAgente)
+                .orElseThrow(() -> new RuntimeException("Agente autenticado não encontrado"));
+        pedido.setAgente(agente);
+        pedido.setStatus(StatusPedido.EM_ANALISE);
+        return new PedidoResponse(pedidoRepository.save(pedido));
+    }
+
     // Avaliar um pedido
-    public PedidoResponse avaliar(Long id, String parecer, StatusPedido status) {
+    public PedidoResponse avaliar(Long id, String parecer, StatusPedido status, String loginAgente) {
 
         Pedido pedido = buscarEntidadePorId(id);
 
-        if (pedido.getStatus() == StatusPedido.CANCELADO) {
-            throw new RuntimeException("Não é possível avaliar um pedido cancelado.");
+        if (pedido.getStatus() != StatusPedido.EM_ANALISE) {
+            throw new RuntimeException("Inicie a análise financeira antes de aprovar ou recusar o pedido.");
         }
         if (status != StatusPedido.APROVADO
                 && status != StatusPedido.REPROVADO) {
@@ -134,6 +158,9 @@ public class PedidoService {
             throw new RuntimeException("Status de avaliação inválido");
         }
 
+        var agente = agenteRepository.findByLogin(loginAgente)
+                .orElseThrow(() -> new RuntimeException("Agente autenticado não encontrado"));
+        pedido.setAgente(agente);
         pedido.setParecerFinanceiro(parecer);
         pedido.setStatus(status);
 

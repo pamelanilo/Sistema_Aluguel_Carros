@@ -1,0 +1,40 @@
+@startuml
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam packageStyle rectangle
+title VRUM! - Diagrama de Pacotes (Visão Lógica · MVC)
+
+package "View — Frontend React + Vite" as View {
+  package "pages\n(Login, Cadastro, Catalogo, Pedidos,\nContratos, GestaoCarros, GestaoClientes)" as Pages
+  package "ui.jsx / App.jsx" as UI
+  package "api.js (cliente HTTP)" as Api
+}
+
+package "Backend Spring Boot (br.com.aluguelcarros.backend)" {
+  package "controller\n(Controller)" as Controller
+  package "service\n(regras de negócio)" as Service
+  package "repository\n(Spring Data JPA)" as Repository
+  package "model\n(Model: entidades)" as Model {
+    package "enums" as Enums
+  }
+  package "dto" as DTO
+  package "config\n(Security, CORS, BCrypt)" as Config
+  package "exception" as Exception
+}
+
+database "Supabase / PostgreSQL" as DB
+
+Pages ..> UI
+Pages ..> Api : chamadas
+Api ..> Controller : HTTP / JSON (sessão)
+Controller ..> Service
+Controller ..> DTO
+Service ..> Repository
+Service ..> Model
+Service ..> DTO
+Repository ..> Model
+Repository ..> DB : JPA / JDBC
+Model ..> Enums
+Config ..> Controller : autenticação / autorização / CORS
+Exception ..> Controller : tratamento de erros
+@enduml

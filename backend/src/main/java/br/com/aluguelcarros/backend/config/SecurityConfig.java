@@ -26,8 +26,10 @@ public class SecurityConfig {
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/health").permitAll() // health check do Render
                 .requestMatchers(HttpMethod.POST, "/clientes").permitAll()
-                .requestMatchers(HttpMethod.POST, "/agentes/empresas", "/agentes/bancos").permitAll() // protegido por X-Setup-Token no controller
+                .requestMatchers(HttpMethod.POST, "/agentes/empresas", "/agentes/bancos").permitAll() // regra (público ou token) no controller
+                .requestMatchers(HttpMethod.GET, "/agentes/cadastro-publico").permitAll()
                 .requestMatchers(HttpMethod.GET, "/auth/me").authenticated()
                 .requestMatchers(HttpMethod.POST, "/pedidos").hasRole("CLIENTE")
                 .requestMatchers(HttpMethod.PATCH, "/pedidos/*/cancelar").hasRole("CLIENTE")
@@ -39,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/automoveis/**").hasRole("AGENTE")
                 .requestMatchers(HttpMethod.PUT, "/automoveis/**").hasRole("AGENTE")
                 .requestMatchers(HttpMethod.DELETE, "/automoveis/**").hasRole("AGENTE")
+                .requestMatchers("/clientes/me").hasRole("CLIENTE") // cliente consulta/edita os próprios dados
                 .requestMatchers("/clientes", "/clientes/**").hasRole("AGENTE")
                 .anyRequest().authenticated())
             .formLogin(form -> form.disable())

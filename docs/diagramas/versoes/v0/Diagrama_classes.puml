@@ -1,0 +1,117 @@
+@startuml
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam classAttributeIconSize 0
+
+title Sistema de Aluguel de Carros - Diagrama de Classes
+
+abstract class Usuario {
+  - id : Long
+  - login : String
+  - senha : String
+  - nome : String
+}
+
+class Cliente {
+  - rg : String
+  - cpf : String
+  - endereco : String
+  - profissao : String
+}
+
+class Rendimento {
+  - id : Long
+  - entidadeEmpregadora : String
+  - valor : BigDecimal
+}
+
+abstract class Agente {
+  - cnpj : String
+}
+
+class AgenteEmpresa {
+  - razaoSocial : String
+}
+
+class AgenteBanco {
+  - codigoBanco : String
+}
+
+class Automovel {
+  - id : Long
+  - matricula : String
+  - ano : int
+  - marca : String
+  - modelo : String
+  - placa : String
+}
+
+class Pedido {
+  - id : Long
+  - dataCriacao : LocalDate
+  - dataInicio : LocalDate
+  - dataFim : LocalDate
+  - valorTotal : BigDecimal
+  - status : StatusPedido
+  - parecerFinanceiro : String
+}
+
+class ContratoAluguel {
+  - id : Long
+  - dataAssinatura : LocalDate
+  - tipo : TipoContrato
+}
+
+class ContratoCredito {
+  - id : Long
+  - valorConcedido : BigDecimal
+  - taxaJuros : BigDecimal
+  - parcelas : int
+}
+
+enum StatusPedido {
+  PENDENTE
+  EM_ANALISE
+  APROVADO
+  REPROVADO
+  CANCELADO
+}
+
+enum TipoContrato {
+  PROPRIEDADE_CLIENTE
+  PROPRIEDADE_EMPRESA
+  PROPRIEDADE_BANCO
+}
+
+Usuario <|-- Cliente
+Usuario <|-- Agente
+Agente <|-- AgenteEmpresa
+Agente <|-- AgenteBanco
+
+Cliente "1" *-- "0..3" Rendimento : possui >
+
+Cliente "1" -- "0..*" Pedido : introduz >
+Agente "0..1" -- "0..*" Pedido : avalia >
+Pedido "0..*" -- "1" Automovel : refere-se a >
+Pedido "1" -- "0..1" ContratoAluguel : gera >
+
+Usuario "1" -- "0..*" Automovel : é proprietário de >
+
+ContratoAluguel "1" -- "0..1" ContratoCredito : financiado por >
+AgenteBanco "1" -- "0..*" ContratoCredito : concede >
+
+Pedido --> StatusPedido
+ContratoAluguel --> TipoContrato
+
+note right of Rendimento
+  Regra de negócio: no máximo
+  3 rendimentos por cliente
+end note
+
+note bottom of Automovel
+  O proprietário pode ser Cliente,
+  AgenteEmpresa ou AgenteBanco,
+  todos são Usuario
+end note
+
+@enduml

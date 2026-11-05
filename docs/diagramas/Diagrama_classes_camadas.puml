@@ -1,0 +1,237 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam ClassFontStyle bold
+skinparam nodesep 18
+skinparam ranksep 60
+skinparam class {
+  BackgroundColor<<RestController>> #D9EAD3
+  BorderColor<<RestController>> #6AA84F
+  BackgroundColor<<Service>> #DAE8FC
+  BorderColor<<Service>> #6C8EBF
+  BackgroundColor<<interface>> #FFE6CC
+  BorderColor<<interface>> #D79B00
+  BackgroundColor<<Configuration>> #E1D5E7
+  BorderColor<<Configuration>> #9673A6
+}
+title VRUM! - Diagrama de Classes: Controllers → Services → Repositories (e segurança) - v2
+
+' ================= Controllers =================
+class AuthController <<RestController>> {
+  mapping: /auth
+  --
+  +login(dados): ResponseEntity
+  +usuarioLogado(auth): ResponseEntity
+  +logout(request): ResponseEntity
+}
+class ClienteController <<RestController>> {
+  mapping: /clientes
+  --
+  +meusDados(auth): Cliente
+  +atualizarMeusDados(dados, auth): Cliente
+  +listar(): List<Cliente>
+  +buscar(id): Cliente
+  +cadastrar(cliente): Cliente
+  +atualizar(id, cliente): Cliente
+  +excluir(id): void
+}
+class AgenteController <<RestController>> {
+  mapping: /agentes
+  --
+  -setupToken: String
+  -cadastroPublico: boolean
+  --
+  +cadastroPublico(): Map
+  +cadastrarEmpresa(dados, token, auth): AgenteEmpresa
+  +cadastrarBanco(dados, token, auth): AgenteBanco
+  +listarEmpresas(): List<AgenteEmpresa>
+  +listarBancos(): List<AgenteBanco>
+}
+class AutomovelController <<RestController>> {
+  mapping: /automoveis
+  --
+  +cadastrar(dados): Automovel
+  +listar(): List<Automovel>
+  +buscar(id): Automovel
+  +atualizar(id, dados): Automovel
+  +excluir(id): void
+}
+class PedidoController <<RestController>> {
+  mapping: /pedidos
+  --
+  +criar(dados, auth): PedidoResponse
+  +listar(auth): List<PedidoResponse>
+  +buscar(id, auth): PedidoResponse
+  +atualizar(id, dados, auth): PedidoResponse
+  +cancelar(id, auth): PedidoResponse
+  +analisar(id, auth): PedidoResponse
+  +avaliar(id, dados, auth): PedidoResponse
+}
+class ContratoController <<RestController>> {
+  mapping: /contratos
+  --
+  +criarContratoAluguel(dados, auth): Map
+  +criarContratoCredito(dados, auth): Map
+  +listarContratosAluguel(auth): List<ContratoAluguelResponse>
+  +buscarContratoAluguel(id): ContratoAluguelResponse
+  +listarContratosCredito(auth): List<ContratoCreditoResponse>
+  +buscarContratoCredito(id): ContratoCreditoResponse
+}
+
+' ================= Services =================
+class AuthService <<Service>> {
+  +autenticar(login, senha): Optional<Usuario>
+  +buscarPorLogin(login): Optional<Usuario>
+  +perfil(usuario): String
+}
+class ClienteService <<Service>> {
+  +listarTodos(): List<Cliente>
+  +buscarPorId(id): Cliente
+  +buscarPorLogin(login): Cliente
+  +cadastrar(cliente): Cliente
+  +atualizar(id, dados): Cliente
+  +excluir(id): void
+  -validarCpf(cpf): String
+  -validarRendimentos(lista): void
+}
+class AgenteService <<Service>> {
+  +cadastrarEmpresa(dados): AgenteEmpresa
+  +cadastrarBanco(dados): AgenteBanco
+  +listarEmpresas(): List<AgenteEmpresa>
+  +listarBancos(): List<AgenteBanco>
+  ~validarCnpj(cnpj): String
+}
+class AutomovelService <<Service>> {
+  +cadastrar(dados): Automovel
+  +listarTodos(): List<Automovel>
+  +buscarPorId(id): Automovel
+  +atualizar(id, dados): Automovel
+  +excluir(id): void
+}
+class PedidoService <<Service>> {
+  +criar(dados, login): PedidoResponse
+  +listarTodos(): List<PedidoResponse>
+  +listarDoCliente(login): List<PedidoResponse>
+  +buscarPorId(id, login, agente): PedidoResponse
+  +atualizar(id, dados, login, agente): PedidoResponse
+  +cancelar(id, login): PedidoResponse
+  +iniciarAnalise(id, loginAgente): PedidoResponse
+  +avaliar(id, parecer, status, loginAgente): PedidoResponse
+  -validarDisponibilidade(automovelId, inicio, fim, ignorar): void
+}
+class ContratoService <<Service>> {
+  +criarContratoAluguel(dados, loginAgente): ContratoAluguel
+  +criarContratoCredito(dados, loginBanco): ContratoCredito
+  +listarContratosAluguel(): List<ContratoAluguelResponse>
+  +listarContratosAluguelDoCliente(login): List<ContratoAluguelResponse>
+  +listarContratosCredito(): List<ContratoCreditoResponse>
+  +listarContratosCreditoDoCliente(login): List<ContratoCreditoResponse>
+  +buscarContratoAluguel(id): ContratoAluguelResponse
+  +buscarContratoCredito(id): ContratoCreditoResponse
+}
+
+' ================= Repositories =================
+interface UsuarioRepository <<interface>> {
+  JpaRepository<Usuario, Long>
+  --
+  +findByLogin(login): Optional<Usuario>
+  +existsByLogin(login): boolean
+  +existsByLoginAndIdNot(login, id): boolean
+}
+interface ClienteRepository <<interface>> {
+  JpaRepository<Cliente, Long>
+  --
+  +findByLogin(login): Optional<Cliente>
+  +existsByCpf(cpf): boolean
+  +existsByCpfAndIdNot(cpf, id): boolean
+}
+interface AgenteRepository <<interface>> {
+  JpaRepository<Agente, Long>
+  --
+  +findByLogin(login): Optional<Agente>
+  +existsByCnpj(cnpj): boolean
+}
+interface AgenteEmpresaRepository <<interface>> {
+  JpaRepository<AgenteEmpresa, Long>
+}
+interface AgenteBancoRepository <<interface>> {
+  JpaRepository<AgenteBanco, Long>
+  --
+  +findByLogin(login): Optional<AgenteBanco>
+}
+interface AutomovelRepository <<interface>> {
+  JpaRepository<Automovel, Long>
+}
+interface PedidoRepository <<interface>> {
+  JpaRepository<Pedido, Long>
+  --
+  +findByCliente_Login(login): List<Pedido>
+  +existsByCliente_Id(id): boolean
+  +existsByAutomovel_Id(id): boolean
+  +findByAutomovel_IdAndStatusIn...(id, status, fim, inicio): List<Pedido>
+}
+interface ContratoAluguelRepository <<interface>> {
+  JpaRepository<ContratoAluguel, Long>
+}
+interface ContratoCreditoRepository <<interface>> {
+  JpaRepository<ContratoCredito, Long>
+}
+
+' ================= Segurança / configuração =================
+class SecurityConfig <<Configuration>> {
+  -corsOrigins: String
+  --
+  +securityFilterChain(http): SecurityFilterChain
+  +corsConfigurationSource(): CorsConfigurationSource
+}
+class PasswordConfig <<Configuration>> {
+  +passwordEncoder(): PasswordEncoder (BCrypt)
+}
+class HealthController <<RestController>> {
+  mapping: /health
+  --
+  +health(): Map
+}
+
+AuthController --> AuthService
+ClienteController --> ClienteService
+AgenteController --> AgenteService
+AutomovelController --> AutomovelService
+PedidoController --> PedidoService
+ContratoController --> ContratoService
+
+AuthService --> UsuarioRepository
+ClienteService --> ClienteRepository
+ClienteService --> UsuarioRepository
+ClienteService --> PedidoRepository
+AgenteService --> UsuarioRepository
+AgenteService --> AgenteRepository
+AgenteService --> AgenteEmpresaRepository
+AgenteService --> AgenteBancoRepository
+AutomovelService --> AutomovelRepository
+AutomovelService --> UsuarioRepository
+AutomovelService --> PedidoRepository
+PedidoService --> PedidoRepository
+PedidoService --> ClienteRepository
+PedidoService --> AutomovelRepository
+PedidoService --> AgenteRepository
+ContratoService --> ContratoAluguelRepository
+ContratoService --> ContratoCreditoRepository
+ContratoService --> PedidoRepository
+ContratoService --> AgenteBancoRepository
+
+AuthService ..> PasswordConfig : PasswordEncoder
+ClienteService ..> PasswordConfig : PasswordEncoder
+AgenteService ..> PasswordConfig : PasswordEncoder
+
+note bottom of SecurityConfig
+  Autenticação por sessão HTTP (cookie JSESSIONID).
+  AuthController grava o SecurityContext na sessão;
+  perfis ROLE_CLIENTE e ROLE_AGENTE definem o acesso
+  por rota. Públicas: /auth/login, POST /clientes,
+  POST /agentes/* (conforme APP_CADASTRO_AGENTES_PUBLICO),
+  /agentes/cadastro-publico e /health.
+end note
+@enduml

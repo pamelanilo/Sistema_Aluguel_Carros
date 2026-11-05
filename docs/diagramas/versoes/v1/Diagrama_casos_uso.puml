@@ -1,0 +1,66 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam DefaultFontName Arial
+title VRUM! - Diagrama de Casos de Uso
+
+actor Cliente
+actor Agente <<abstract>>
+actor "Agente da Empresa" as AgenteEmpresa
+actor "Agente do Banco" as AgenteBanco
+AgenteEmpresa --|> Agente
+AgenteBanco --|> Agente
+
+rectangle "Sistema de Aluguel de Carros" {
+  usecase "Cadastrar cliente" as UC_Cad
+  usecase "Autenticar-se" as UC_Login
+  usecase "Consultar automóveis" as UC_Carros
+  usecase "Registrar automóvel" as UC_RegCarro
+  usecase "Alterar / excluir automóvel" as UC_ManCarro
+  usecase "Introduzir pedido" as UC_Criar
+  usecase "Consultar pedidos e status" as UC_Consultar
+  usecase "Modificar pedido" as UC_Mod
+  usecase "Cancelar pedido" as UC_Cancelar
+  usecase "Consultar pedidos recebidos" as UC_ListaAgente
+  usecase "Modificar pedido em análise" as UC_ModAgente
+  usecase "Iniciar análise financeira" as UC_Analisar
+  usecase "Aprovar / recusar pedido (com justificativa)" as UC_Avaliar
+  usecase "Consultar dados de cliente" as UC_Cliente
+  usecase "Cadastrar / modificar / excluir cliente" as UC_CRUD
+  usecase "Gerar contrato de aluguel" as UC_Contrato
+  usecase "Registrar contrato de crédito" as UC_Credito
+  usecase "Consultar contratos\n(cliente: somente os seus)" as UC_ConsultarContrato
+}
+
+Cliente --> UC_Cad
+Cliente --> UC_Login
+Cliente --> UC_Carros
+Cliente --> UC_Criar
+Cliente --> UC_Consultar
+Cliente --> UC_Mod
+Cliente --> UC_Cancelar
+Cliente --> UC_ConsultarContrato
+
+Agente --> UC_Login
+Agente --> UC_ListaAgente
+Agente --> UC_ModAgente
+Agente --> UC_Analisar
+Agente --> UC_Avaliar
+Agente --> UC_Cliente
+Agente --> UC_CRUD
+Agente --> UC_RegCarro
+Agente --> UC_ManCarro
+Agente --> UC_Contrato
+Agente --> UC_ConsultarContrato
+AgenteBanco --> UC_Credito
+
+note bottom of UC_Credito
+  O crédito é opcional e concedido
+  pelo agente do banco.
+end note
+note bottom of UC_Avaliar
+  A análise registra parecer e
+  resultado aprovado ou reprovado.
+end note
+@enduml

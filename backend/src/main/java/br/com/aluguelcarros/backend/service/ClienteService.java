@@ -1,8 +1,13 @@
 package br.com.aluguelcarros.backend.service;
 
+import br.com.aluguelcarros.backend.exception.RecursoNaoEncontradoException;
+import br.com.aluguelcarros.backend.exception.RegraNegocioException;
+
 import br.com.aluguelcarros.backend.model.Cliente;
 import br.com.aluguelcarros.backend.model.Rendimento;
 import br.com.aluguelcarros.backend.repository.ClienteRepository;
+import br.com.aluguelcarros.backend.repository.PedidoRepository;
+import br.com.aluguelcarros.backend.repository.UsuarioRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,10 +20,16 @@ public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PedidoRepository pedidoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public ClienteService(
             ClienteRepository clienteRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            PedidoRepository pedidoRepository,
+            UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+        this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -29,10 +40,17 @@ public class ClienteService {
     }
 
     @Transactional(readOnly = true)
+    public Cliente buscarPorLogin(String login) {
+        return clienteRepository.findByLogin(login)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException("Cliente não encontrado"));
+    }
+
+    @Transactional(readOnly = true)
     public Cliente buscarPorId(Long id) {
         return clienteRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Cliente não encontrado"));
+                        new RecursoNaoEncontradoException("Cliente não encontrado"));
     }
 
     @Transactional
@@ -40,15 +58,15 @@ public class ClienteService {
         validarRendimentos(cliente.getRendimentos());
         cliente.setCpf(validarCpf(cliente.getCpf()));
         if (clienteRepository.existsByCpf(cliente.getCpf())) {
-            throw new IllegalArgumentException("Já existe um cliente cadastrado com este CPF.");
+            throw new RegraNegocioException("Já existe um cliente cadastrado com este CPF.");
         }
         if (cliente.getLogin() == null || cliente.getLogin().isBlank()
-                || clienteRepository.existsByLogin(cliente.getLogin())) {
-            throw new IllegalArgumentException("Login inválido ou já utilizado.");
+                || usuarioRepository.existsByLogin(cliente.getLogin())) {
+            throw new RegraNegocioException("Login inválido ou já utilizado.");
         }
 
         if (cliente.getSenha() == null || cliente.getSenha().isBlank()) {
-            throw new IllegalArgumentException("A senha é obrigatória.");
+            throw new RegraNegocioException("A senha é obrigatória.");
         }
 
         cliente.setSenha(passwordEncoder.encode(cliente.getSenha()));
@@ -69,11 +87,11 @@ public class ClienteService {
         validarRendimentos(dados.getRendimentos());
         dados.setCpf(validarCpf(dados.getCpf()));
         if (clienteRepository.existsByCpfAndIdNot(dados.getCpf(), id)) {
-            throw new IllegalArgumentException("Já existe outro cliente com este CPF.");
+            throw new RegraNegocioException("Já existe outro cliente com este CPF.");
         }
         if (dados.getLogin() == null || dados.getLogin().isBlank()
-                || clienteRepository.existsByLoginAndIdNot(dados.getLogin(), id)) {
-            throw new IllegalArgumentException("Login inválido ou já utilizado por outro usuário.");
+                || usuarioRepository.existsByLoginAndIdNot(dados.getLogin(), id)) {
+            throw new RegraNegocioException("Login inválido ou já utilizado por outro usuário.");
         }
 
         cliente.setNome(dados.getNome());
@@ -107,7 +125,7 @@ public class ClienteService {
     private String validarCpf(String cpf) {
         String d = cpf == null ? "" : cpf.replaceAll("\\D", "");
         if (d.length() != 11 || d.chars().distinct().count() == 1) {
-            throw new IllegalArgumentException("CPF inválido.");
+            throw new RegraNegocioException("CPF inválido.");
         }
         for (int t = 9; t < 11; t++) {
             int soma = 0;
@@ -116,7 +134,7 @@ public class ClienteService {
             }
             int dv = (soma * 10) % 11 % 10;
             if (dv != d.charAt(t) - '0') {
-                throw new IllegalArgumentException("CPF inválido.");
+                throw new RegraNegocioException("CPF inválido.");
             }
         }
         return d;
@@ -128,7 +146,7 @@ public class ClienteService {
         }
 
         if (rendimentos.size() > 3) {
-            throw new IllegalArgumentException(
+            throw new RegraNegocioException(
                     "O cliente pode possuir no máximo 3 rendimentos.");
         }
 
@@ -138,7 +156,7 @@ public class ClienteService {
                     || rendimento.getEntidadeEmpregadora().isBlank()
                     || rendimento.getValor() == null
                     || rendimento.getValor().signum() <= 0) {
-                throw new IllegalArgumentException(
+                throw new RegraNegocioException(
                         "Informe a entidade empregadora e um valor de rendimento maior que zero.");
             }
         }
@@ -147,6 +165,10 @@ public class ClienteService {
     @Transactional
     public void excluir(Long id) {
         Cliente cliente = buscarPorId(id);
+        if (pedidoRepository.existsByCliente_Id(id)) {
+            throw new RegraNegocioException(
+                    "Este cliente possui pedidos registrados e não pode ser excluído.");
+        }
         clienteRepository.delete(cliente);
     }
 }

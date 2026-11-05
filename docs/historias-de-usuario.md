@@ -15,6 +15,15 @@ Como usuário cadastrado, quero entrar com login e senha para acessar as funcion
 **HU03 — Encerrar sessão**  
 Como usuário autenticado, quero sair do sistema para encerrar minha sessão.
 
+**HU21 — Cadastrar-se como empresa ou banco**  
+Como agente (locadora ou banco), quero criar minha conta escolhendo o tipo na tela de cadastro e informando CNPJ e razão social (empresa) ou código do banco, para poder analisar pedidos.
+
+**HU22 — Usar o modo escuro**  
+Como usuário, quero alternar entre modo claro e escuro (ou seguir o tema do sistema) para usar o sistema com conforto visual.
+
+**HU20 — Manter meus dados**  
+Como cliente, quero consultar e alterar meus dados de identificação, profissão e rendimentos (até três), para que a análise financeira use informações atualizadas.
+
 ## Clientes
 **HU04 — Consultar clientes**  
 Como agente, quero consultar os dados de clientes para analisar os pedidos recebidos.
@@ -48,20 +57,23 @@ Como cliente, quero cancelar um pedido pendente ou em análise quando desistir d
 **HU13 — Consultar pedidos recebidos**  
 Como agente, quero consultar os pedidos recebidos para realizar a análise.
 
-**HU14 — Avaliar pedido**  
-Como agente, quero registrar um parecer financeiro e aprovar ou reprovar o pedido, para comunicar o resultado da análise.
+**HU14 — Iniciar análise financeira**  
+Como agente, quero mover um pedido pendente para "Em análise" e ver a profissão e a renda mensal do cliente, para sinalizar que a avaliação financeira começou e ter os dados necessários para ela.
+
+**HU15 — Avaliar pedido**  
+Como agente, quero registrar um parecer financeiro e aprovar ou reprovar o pedido (justificativa obrigatória na recusa), para comunicar o resultado da análise.
 
 ## Contratos
-**HU15 — Gerar contrato de aluguel**  
-Como agente, quero gerar um contrato de aluguel para um pedido aprovado.
+**HU16 — Gerar contrato de aluguel**  
+Como agente, quero gerar um contrato de aluguel para um pedido aprovado, escolhendo o tipo (propriedade do cliente, da empresa ou do banco), para que o automóvel seja registrado com o proprietário correto e o contrato fique como "executado".
 
-**HU16 — Registrar contrato de crédito**  
+**HU17 — Registrar contrato de crédito**  
 Como agente bancário, quero associar um contrato de crédito a um contrato de aluguel, quando o cliente solicitar financiamento.
 
-**HU17 — Consultar contratos**  
+**HU18 — Consultar contratos**  
 Como agente autorizado, quero consultar contratos de aluguel e de crédito registrados.
 
-**HU18 — Consultar meus contratos**  
+**HU19 — Consultar meus contratos**  
 Como cliente, quero consultar os contratos de aluguel (e o crédito, se houver) gerados a partir dos meus pedidos aprovados, sem ver os de outros clientes.
 
 ## Regras e critérios de aceite
@@ -74,17 +86,13 @@ Como cliente, quero consultar os contratos de aluguel (e o crédito, se houver) 
 7. O contrato de crédito é opcional e somente pode ser registrado por um agente bancário autenticado.
 8. Cada cliente pode informar até três rendimentos.
 9. O proprietário do automóvel é uma instância de `Usuario`, podendo ser cliente, agente de empresa ou agente de banco.
+10. Um pedido só pode ser aprovado se o automóvel não tiver outro pedido aprovado em período sobreposto.
+11. Clientes e automóveis que já possuem pedidos não podem ser excluídos (preserva o histórico).
+12. O pedido só pode ser analisado após `PENDENTE → EM_ANALISE`; a aprovação/recusa só ocorre a partir de `EM_ANALISE`.
+13. O login é único entre clientes, empresas e bancos; CPF e CNPJ têm dígitos verificadores validados e não se repetem.
+14. O autocadastro de empresas e bancos pode ser desligado por configuração (`APP_CADASTRO_AGENTES_PUBLICO=false`).
 
 ## Observações de escopo
-- O modelo contém dados para contrato de crédito, mas o fluxo completo de solicitação de crédito pelo cliente e a comunicação automática de recusa ainda precisam de uma interface/etapa específica.
+- O crédito é concedido pelo agente bancário no momento de gerar o contrato; o cliente não solicita crédito por uma tela própria.
 - O sistema armazena datas do pedido, mas o enunciado fornecido não define tarifa diária; por isso o projeto não inventa uma regra de cálculo de preço.
-- As imagens PNG dos diagramas devem ser regeneradas a partir dos arquivos `.puml` após alterações na modelagem.
-
-**HU18 — Iniciar análise financeira**  
-Como agente, quero mover um pedido pendente para "Em análise" para sinalizar ao cliente que a avaliação financeira começou.
-
-**HU19 — Recusar com justificativa**  
-Como agente, quero registrar uma justificativa obrigatória ao recusar um pedido para que o cliente entenda o motivo.
-
-**HU20 — Atualizar proprietário pelo contrato**  
-Como agente, quero que o contrato de aluguel atualize o proprietário do automóvel e fique como "executado".
+- As imagens PNG dos diagramas são geradas a partir dos arquivos `.puml`; versões anteriores ficam em `docs/diagramas/versoes/`.

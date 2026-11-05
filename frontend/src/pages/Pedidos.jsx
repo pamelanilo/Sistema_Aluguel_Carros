@@ -47,6 +47,8 @@ export default function Pedidos({ usuario }) {
           <h3>Pedido #{p.id} · {p.marca} {p.modelo} <Badge valor={p.status} /></h3>
           <div className="info">
             {!cliente && <span>Cliente: <b>{p.clienteNome}</b></span>}
+            {!cliente && <span>Profissão: <b>{p.clienteProfissao || '—'}</b></span>}
+            {!cliente && <span>Renda mensal: <b>{brl(p.clienteRendaTotal)}</b> ({p.clienteQtdRendimentos || 0} rend.)</span>}
             <span>Placa: <b>{p.placa}</b></span>
             <span>Retirada: <b>{dataBr(p.dataInicio)}</b></span>
             <span>Devolução: <b>{dataBr(p.dataFim)}</b></span>
@@ -110,7 +112,8 @@ function FormAvaliar({ modal, onFechar, onOk }) {
     catch (err) { setErro(err.message); setEnv(false) }
   }
   return <Modal titulo={`${aprovar ? 'Aprovar' : 'Recusar'} pedido #${modal.p.id}`} onFechar={onFechar}><form className="empilha" onSubmit={enviar}>
-    <div className="resumo"><b>{modal.p.clienteNome}</b>{modal.p.marca} {modal.p.modelo} · {dataBr(modal.p.dataInicio)} a {dataBr(modal.p.dataFim)}</div>
+    <div className="resumo"><b>{modal.p.clienteNome}</b>{modal.p.marca} {modal.p.modelo} · {dataBr(modal.p.dataInicio)} a {dataBr(modal.p.dataFim)}
+      <br />Análise financeira: {modal.p.clienteProfissao || 'profissão não informada'} · renda mensal {brl(modal.p.clienteRendaTotal)} · valor do pedido {brl(modal.p.valorTotal)}</div>
     <Alerta>{erro}</Alerta>
     <Campo rotulo={aprovar ? 'Parecer financeiro' : 'Justificativa da recusa (obrigatória)'}><textarea value={parecer} onChange={(e) => setParecer(e.target.value)} autoFocus /></Campo>
     <div className="rodape-form"><button type="button" className="btn fantasma" onClick={onFechar}>Voltar</button>

@@ -1,0 +1,27 @@
+# Blueprint do Render: Dashboard → New → Blueprint → selecione este repositório.
+# Os valores marcados com "sync: false" são pedidos na tela durante a criação (não ficam no Git).
+services:
+  - type: web
+    name: vrum-backend
+    runtime: docker
+    plan: free
+    region: virginia            # mesma região do Supabase (aws us-east-1) = menor latência
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: SUPABASE_DB_URL
+        sync: false             # jdbc:postgresql://<HOST>:5432/postgres?sslmode=require
+      - key: SUPABASE_DB_USER
+        sync: false             # postgres.<project-ref>
+      - key: SUPABASE_DB_PASSWORD
+        sync: false
+      - key: APP_SETUP_TOKEN
+        generateValue: true     # token aleatório para criar agentes (veja em Environment)
+      - key: APP_CORS_ORIGINS
+        sync: false             # URL do front na Vercel, ex.: https://vrum.vercel.app
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SESSION_COOKIE_SAME_SITE
+        value: lax              # o front chama a API pelo proxy da Vercel (mesmo site)

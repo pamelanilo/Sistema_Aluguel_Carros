@@ -1,5 +1,9 @@
 package br.com.aluguelcarros.backend.service;
 
+import br.com.aluguelcarros.backend.exception.RecursoNaoEncontradoException;
+import br.com.aluguelcarros.backend.exception.RegraNegocioException;
+import br.com.aluguelcarros.backend.exception.AcessoNegadoException;
+
 import br.com.aluguelcarros.backend.dto.PedidoRequest;
 import br.com.aluguelcarros.backend.dto.PedidoResponse;
 import br.com.aluguelcarros.backend.model.Pedido;
@@ -42,17 +46,20 @@ public class PedidoService {
     public PedidoResponse criar(PedidoRequest dados, String loginAutenticado) {
 
         Cliente cliente = clienteRepository.findByLogin(loginAutenticado)
-                .orElseThrow(() -> new RuntimeException("Cliente autenticado não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente autenticado não encontrado"));
 
         if (dados.getDataInicio() == null || dados.getDataFim() == null
                 || !dados.getDataInicio().isAfter(LocalDate.now().minusDays(1))
                 || !dados.getDataFim().isAfter(dados.getDataInicio())) {
-            throw new RuntimeException("Informe datas válidas: retirada a partir de hoje e devolução posterior.");
+            throw new RegraNegocioException("Informe datas válidas: retirada a partir de hoje e devolução posterior.");
         }
 
+        validarValor(dados);
         Automovel automovel = automovelRepository.findById(dados.getAutomovelId())
                 .orElseThrow(() ->
-                        new RuntimeException("Automóvel não encontrado"));
+                        new RecursoNaoEncontradoException("Automóvel não encontrado"));
+        validarDisponibilidade(automovel.getId(), dados.getDataInicio(), dados.getDataFim(), null);
+
 
         Pedido pedido = new Pedido();
 
@@ -82,7 +89,7 @@ public class PedidoService {
         Pedido pedido = buscarEntidadePorId(id);
         if (!agente && (pedido.getCliente() == null
                 || !pedido.getCliente().getLogin().equals(loginAutenticado))) {
-            throw new RuntimeException("Você não tem permissão para consultar este pedido.");
+            throw new AcessoNegadoException("Você não tem permissão para consultar este pedido.");
         }
         return new PedidoResponse(pedido);
     }
@@ -93,20 +100,23 @@ public class PedidoService {
 
         if (!agente && (pedido.getCliente() == null
                 || !pedido.getCliente().getLogin().equals(loginAutenticado))) {
-            throw new RuntimeException("Você não tem permissão para alterar este pedido.");
+            throw new AcessoNegadoException("Você não tem permissão para alterar este pedido.");
         }
         if (pedido.getStatus() != StatusPedido.PENDENTE
                 && pedido.getStatus() != StatusPedido.EM_ANALISE) {
-            throw new RuntimeException("Somente pedidos pendentes ou em análise podem ser alterados.");
+            throw new RegraNegocioException("Somente pedidos pendentes ou em análise podem ser alterados.");
         }
         if (dados.getDataInicio() == null || dados.getDataFim() == null
                 || dados.getDataInicio().isBefore(LocalDate.now())
                 || !dados.getDataFim().isAfter(dados.getDataInicio())) {
-            throw new RuntimeException("Informe datas válidas: retirada a partir de hoje e devolução posterior.");
+            throw new RegraNegocioException("Informe datas válidas: retirada a partir de hoje e devolução posterior.");
         }
 
+        validarValor(dados);
         Automovel automovel = automovelRepository.findById(dados.getAutomovelId())
-                .orElseThrow(() -> new RuntimeException("Automóvel não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Automóvel não encontrado"));
+        validarDisponibilidade(automovel.getId(), dados.getDataInicio(), dados.getDataFim(), pedido.getId());
+
 
         pedido.setAutomovel(automovel);
         pedido.setDataInicio(dados.getDataInicio());
@@ -121,10 +131,10 @@ public class PedidoService {
 
         Pedido pedido = buscarEntidadePorId(id);
         if (pedido.getCliente() == null || !pedido.getCliente().getLogin().equals(loginAutenticado)) {
-            throw new RuntimeException("Você não tem permissão para cancelar este pedido.");
+            throw new AcessoNegadoException("Você não tem permissão para cancelar este pedido.");
         }
         if (pedido.getStatus() != StatusPedido.PENDENTE && pedido.getStatus() != StatusPedido.EM_ANALISE) {
-            throw new RuntimeException("Somente pedidos pendentes ou em análise podem ser cancelados.");
+            throw new RegraNegocioException("Somente pedidos pendentes ou em análise podem ser cancelados.");
         }
         pedido.setStatus(StatusPedido.CANCELADO);
 
@@ -135,10 +145,10 @@ public class PedidoService {
     public PedidoResponse iniciarAnalise(Long id, String loginAgente) {
         Pedido pedido = buscarEntidadePorId(id);
         if (pedido.getStatus() != StatusPedido.PENDENTE) {
-            throw new RuntimeException("Somente pedidos pendentes podem entrar em análise.");
+            throw new RegraNegocioException("Somente pedidos pendentes podem entrar em análise.");
         }
         var agente = agenteRepository.findByLogin(loginAgente)
-                .orElseThrow(() -> new RuntimeException("Agente autenticado não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Agente autenticado não encontrado"));
         pedido.setAgente(agente);
         pedido.setStatus(StatusPedido.EM_ANALISE);
         return new PedidoResponse(pedidoRepository.save(pedido));
@@ -150,16 +160,20 @@ public class PedidoService {
         Pedido pedido = buscarEntidadePorId(id);
 
         if (pedido.getStatus() != StatusPedido.EM_ANALISE) {
-            throw new RuntimeException("Inicie a análise financeira antes de aprovar ou recusar o pedido.");
+            throw new RegraNegocioException("Inicie a análise financeira antes de aprovar ou recusar o pedido.");
         }
         if (status != StatusPedido.APROVADO
                 && status != StatusPedido.REPROVADO) {
 
-            throw new RuntimeException("Status de avaliação inválido");
+            throw new RegraNegocioException("Status de avaliação inválido");
         }
 
         var agente = agenteRepository.findByLogin(loginAgente)
-                .orElseThrow(() -> new RuntimeException("Agente autenticado não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Agente autenticado não encontrado"));
+        if (status == StatusPedido.APROVADO) {
+            validarDisponibilidade(pedido.getAutomovel().getId(),
+                    pedido.getDataInicio(), pedido.getDataFim(), pedido.getId());
+        }
         pedido.setAgente(agente);
         pedido.setParecerFinanceiro(parecer);
         pedido.setStatus(status);
@@ -167,11 +181,33 @@ public class PedidoService {
         return new PedidoResponse(pedidoRepository.save(pedido));
     }
 
+    private void validarValor(PedidoRequest dados) {
+        if (dados.getAutomovelId() == null) {
+            throw new RegraNegocioException("Selecione o automóvel do pedido.");
+        }
+        if (dados.getValorTotal() != null && dados.getValorTotal().signum() < 0) {
+            throw new RegraNegocioException("O valor do pedido não pode ser negativo.");
+        }
+    }
+
+    // O automóvel não pode ter outro pedido aprovado no mesmo período.
+    private void validarDisponibilidade(Long automovelId, LocalDate inicio, LocalDate fim, Long ignorarPedidoId) {
+        boolean ocupado = pedidoRepository
+                .findByAutomovel_IdAndStatusInAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
+                        automovelId, List.of(StatusPedido.APROVADO), fim, inicio)
+                .stream()
+                .anyMatch(p -> !p.getId().equals(ignorarPedidoId));
+        if (ocupado) {
+            throw new RegraNegocioException(
+                    "O automóvel já está reservado por outro pedido aprovado neste período.");
+        }
+    }
+
     // Buscar a entidade para operações internas
     private Pedido buscarEntidadePorId(Long id) {
 
         return pedidoRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Pedido não encontrado"));
+                        new RecursoNaoEncontradoException("Pedido não encontrado"));
     }
 }

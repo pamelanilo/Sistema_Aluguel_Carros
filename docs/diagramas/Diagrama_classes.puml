@@ -1,10 +1,19 @@
 @startuml
+!pragma layout smetana
 skinparam shadowing false
 skinparam DefaultFontName Arial
 skinparam classAttributeIconSize 0
-title VRUM! - Diagrama de Classes (Model)
+skinparam class {
+  BackgroundColor #DAE8FC
+  BorderColor #6C8EBF
+  BackgroundColor<<abstract>> #E1D5E7
+  BorderColor<<abstract>> #9673A6
+  BackgroundColor<<enumeration>> #FFF2CC
+  BorderColor<<enumeration>> #D6B656
+}
+title VRUM! - Diagrama de Classes: pacote model (entidades JPA) - v2
 
-abstract class Usuario {
+abstract class Usuario <<abstract>> {
   - id : Long
   - login : String
   - senha : String
@@ -15,13 +24,15 @@ class Cliente {
   - cpf : String
   - endereco : String
   - profissao : String
+  --
+  + adicionarRendimento(r : Rendimento)
 }
 class Rendimento {
   - id : Long
   - entidadeEmpregadora : String
   - valor : BigDecimal
 }
-abstract class Agente {
+abstract class Agente <<abstract>> {
   - cnpj : String
 }
 class AgenteEmpresa {
@@ -59,18 +70,18 @@ class ContratoCredito {
   - taxaJuros : BigDecimal
   - parcelas : int
 }
-enum StatusPedido {
+enum StatusPedido <<enumeration>> {
   PENDENTE
   EM_ANALISE
   APROVADO
   REPROVADO
   CANCELADO
 }
-enum StatusContrato {
+enum StatusContrato <<enumeration>> {
   ASSINADO
   EXECUTADO
 }
-enum TipoContrato {
+enum TipoContrato <<enumeration>> {
   PROPRIEDADE_CLIENTE
   PROPRIEDADE_EMPRESA
   PROPRIEDADE_BANCO
@@ -104,5 +115,16 @@ end note
 note bottom of Pedido
   PENDENTE -> EM_ANALISE -> APROVADO | REPROVADO
   Cancelamento: PENDENTE ou EM_ANALISE.
+  Aprovação exige o automóvel livre no período
+  (sem outro pedido APROVADO sobreposto).
 end note
+
+legend right
+  <b>Legenda</b>
+  Triângulo vazado: herança (JOINED)
+  Losango cheio: composição
+  Seta aberta: associação navegável / uso de enum
+  Linha simples: associação bidirecional
+  Getters e setters omitidos.
+endlegend
 @enduml

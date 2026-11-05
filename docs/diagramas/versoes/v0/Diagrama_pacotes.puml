@@ -1,0 +1,56 @@
+@startuml
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam packageStyle rectangle
+
+title Sistema de Aluguel de Carros - Diagrama de Pacotes (Visão Lógica)
+
+package "Frontend (React + Vite)" as FE {
+  package "pages" as FE_PAGES
+  package "api.js" as FE_API
+}
+
+package "Backend (Spring Boot)" as BE {
+  package "br.com.aluguelcarros.backend" as BASE {
+    package "controller" as CTRL
+    package "service" as SERV
+    package "repository" as REPO
+    package "model" as MODEL {
+      package "enums" as ENUMS
+    }
+    package "dto" as DTO
+    package "config" as CFG
+  }
+}
+
+database "Supabase\n(PostgreSQL)" as DB
+
+FE_PAGES ..> FE_API : utiliza
+
+FE_API ..> CTRL : <<HTTP / REST (JSON)>>
+
+CTRL ..> SERV
+CTRL ..> DTO
+SERV ..> REPO
+SERV ..> MODEL
+SERV ..> DTO
+REPO ..> MODEL
+DTO ..> MODEL
+MODEL ..> ENUMS
+CFG ..> CTRL : CORS e segurança
+
+REPO ..> DB : <<JDBC / JPA>>
+
+note bottom of FE
+  View (MVC)
+end note
+
+note bottom of CTRL
+  Controller (MVC)
+end note
+
+note bottom of MODEL
+  Model (MVC)
+end note
+
+@enduml

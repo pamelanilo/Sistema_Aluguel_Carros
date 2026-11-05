@@ -1,0 +1,141 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam ClassFontStyle bold
+skinparam class {
+  BackgroundColor<<request>> #D9EAD3
+  BorderColor<<request>> #6AA84F
+  BackgroundColor<<response>> #DAE8FC
+  BorderColor<<response>> #6C8EBF
+  BackgroundColor<<record>> #DAE8FC
+  BorderColor<<record>> #6C8EBF
+  BackgroundColor<<exception>> #F8CECC
+  BorderColor<<exception>> #B85450
+  BackgroundColor<<RestControllerAdvice>> #F8CECC
+  BorderColor<<RestControllerAdvice>> #B85450
+}
+title VRUM! - Diagrama de Classes: pacotes dto e exception - v2
+
+package "dto · Requests" {
+  class AgenteEmpresaRequest <<request>> {
+    nome: String
+    login: String
+    senha: String
+    cnpj: String
+    razaoSocial: String
+  }
+  class AgenteBancoRequest <<request>> {
+    nome: String
+    login: String
+    senha: String
+    cnpj: String
+    codigoBanco: String
+  }
+  class AutomovelRequest <<request>> {
+    matricula: String
+    ano: int
+    marca: String
+    modelo: String
+    placa: String
+    proprietarioId: Long
+  }
+  class PedidoRequest <<request>> {
+    automovelId: Long
+    dataInicio: LocalDate
+    dataFim: LocalDate
+    valorTotal: BigDecimal
+  }
+  class AvaliacaoRequest <<request>> {
+    status: StatusPedido
+    parecer: String
+  }
+  class ContratoAluguelRequest <<request>> {
+    pedidoId: Long
+    tipo: TipoContrato
+  }
+  class ContratoCreditoRequest <<request>> {
+    contratoAluguelId: Long
+    agenteBancoId: Long
+    valorConcedido: BigDecimal
+    taxaJuros: BigDecimal
+    parcelas: int
+  }
+}
+
+package "dto · Responses" {
+  class PedidoResponse <<response>> {
+    id: Long
+    dataCriacao, dataInicio, dataFim: LocalDate
+    valorTotal: BigDecimal
+    status: StatusPedido
+    parecerFinanceiro: String
+    clienteId: Long
+    clienteNome: String
+    clienteProfissao: String
+    clienteRendaTotal: BigDecimal
+    clienteQtdRendimentos: int
+    automovelId: Long
+    marca, modelo, placa: String
+    contratoAluguelId: Long
+    --
+    +PedidoResponse(p: Pedido)
+  }
+  class ContratoAluguelResponse <<record>> {
+    id: Long
+    dataAssinatura: LocalDate
+    tipo: String
+    status: String
+    pedidoId: Long
+    cliente: String
+    automovel: String
+    proprietario: String
+    contratoCreditoId: Long
+    --
+    +{static} from(c: ContratoAluguel)
+  }
+  class ContratoCreditoResponse <<record>> {
+    id: Long
+    valorConcedido: BigDecimal
+    taxaJuros: BigDecimal
+    parcelas: int
+    contratoAluguelId: Long
+    agenteBancoId: Long
+    --
+    +{static} from(c: ContratoCredito)
+  }
+}
+
+package "exception" {
+  class RuntimeException <<java.lang>>
+  class RecursoNaoEncontradoException <<exception>>
+  class RegraNegocioException <<exception>>
+  class AcessoNegadoException <<exception>>
+  class TratadorDeExcecoes <<RestControllerAdvice>> {
+    +recursoNaoEncontrado(e): ProblemDetail (404)
+    +acessoNegado(e): ProblemDetail (403)
+    +regraNegocio(e): ProblemDetail (400)
+    +validacao(e): ProblemDetail (400)
+    +statusExplicito(e): ProblemDetail (status da exceção)
+    +argumentoInvalido(e): ProblemDetail (400)
+    +integridade(e): ProblemDetail (409)
+    +regraNaoTratada(e): ProblemDetail (400)
+  }
+}
+
+RuntimeException <|-- RecursoNaoEncontradoException
+RuntimeException <|-- RegraNegocioException
+RuntimeException <|-- AcessoNegadoException
+TratadorDeExcecoes ..> RecursoNaoEncontradoException : trata
+TratadorDeExcecoes ..> RegraNegocioException : trata
+TratadorDeExcecoes ..> AcessoNegadoException : trata
+ContratoAluguelResponse ..> ContratoCreditoResponse : contratoCreditoId
+
+note bottom of TratadorDeExcecoes
+  Erros saem no formato ProblemDetail (RFC 9457):
+  {"status": 400, "detail": "mensagem", ...}.
+  O front-end exibe "detail" ao usuário.
+end note
+note "Cliente é recebido/devolvido como entidade (senha WRITE_ONLY no JSON);\nAuth usa Map {login, senha}. Getters e setters omitidos." as N1
+@enduml

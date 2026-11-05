@@ -1,40 +1,42 @@
 @startuml
+!pragma layout smetana
 skinparam shadowing false
 skinparam DefaultFontName Arial
 skinparam packageStyle rectangle
-title VRUM! - Diagrama de Pacotes (Visão Lógica · MVC)
+title VRUM! - Diagrama de Pacotes (Visão Lógica · MVC) - v2
 
-package "View — Frontend React + Vite" as View {
-  package "pages\n(Login, Cadastro, Catalogo, Pedidos,\nContratos, GestaoCarros, GestaoClientes)" as Pages
-  package "ui.jsx / App.jsx" as UI
-  package "api.js (cliente HTTP)" as Api
+package "Subsistema de construção dinâmica das páginas web\n(View — Frontend React + Vite)" as View {
+  package "pages\n(Login, Cadastro, Inicio, Catalogo, Pedidos,\nContratos, MeusDados, GestaoCarros, GestaoClientes)" as Pages
+  package "App.jsx / ui.jsx / utils.js\n(roteamento por perfil, componentes, máscaras)" as UI
+  package "api.js\n(cliente HTTP)" as Api
 }
 
-package "Backend Spring Boot (br.com.aluguelcarros.backend)" {
+package "Subsistema de gestão de pedidos e contratos\n(Backend Spring Boot · br.com.aluguelcarros.backend)" as Backend {
   package "controller\n(Controller)" as Controller
   package "service\n(regras de negócio)" as Service
   package "repository\n(Spring Data JPA)" as Repository
-  package "model\n(Model: entidades)" as Model {
+  package "model\n(Model: entidades JPA)" as Model {
     package "enums" as Enums
   }
-  package "dto" as DTO
+  package "dto\n(requests / responses)" as DTO
   package "config\n(Security, CORS, BCrypt)" as Config
-  package "exception" as Exception
+  package "exception\n(RecursoNaoEncontrado, RegraNegocio,\nAcessoNegado, TratadorDeExcecoes)" as Exception
 }
 
 database "Supabase / PostgreSQL" as DB
 
 Pages ..> UI
 Pages ..> Api : chamadas
-Api ..> Controller : HTTP / JSON (sessão)
+Api ..> Controller : HTTP / JSON\n(sessão por cookie)
 Controller ..> Service
 Controller ..> DTO
 Service ..> Repository
 Service ..> Model
 Service ..> DTO
+Service ..> Exception : lança
 Repository ..> Model
 Repository ..> DB : JPA / JDBC
 Model ..> Enums
-Config ..> Controller : autenticação / autorização / CORS
-Exception ..> Controller : tratamento de erros
+Config ..> Controller : autenticação /\nautorização / CORS
+Exception ..> Controller : tratamento de erros\n(ProblemDetail)
 @enduml

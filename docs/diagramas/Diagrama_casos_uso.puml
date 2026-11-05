@@ -1,9 +1,9 @@
 @startuml
+!pragma layout smetana
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam DefaultFontName Arial
-title VRUM! - Diagrama de Casos de Uso
 
 actor Cliente
 actor Agente <<abstract>>
@@ -12,8 +12,10 @@ actor "Agente do Banco" as AgenteBanco
 AgenteEmpresa --|> Agente
 AgenteBanco --|> Agente
 
-rectangle "Sistema de Aluguel de Carros" {
+rectangle "VRUM! - Sistema de Aluguel de Carros (Casos de Uso - v2)" {
   usecase "Cadastrar cliente" as UC_Cad
+  usecase "Cadastrar-se como empresa / banco\n(CNPJ; pode ser restrito por configuração)" as UC_CadAgente
+  usecase "Consultar / alterar meus dados\n(até 3 rendimentos)" as UC_MeusDados
   usecase "Autenticar-se" as UC_Login
   usecase "Consultar automóveis" as UC_Carros
   usecase "Registrar automóvel" as UC_RegCarro
@@ -25,6 +27,7 @@ rectangle "Sistema de Aluguel de Carros" {
   usecase "Consultar pedidos recebidos" as UC_ListaAgente
   usecase "Modificar pedido em análise" as UC_ModAgente
   usecase "Iniciar análise financeira" as UC_Analisar
+  usecase "Consultar renda do cliente" as UC_Renda
   usecase "Aprovar / recusar pedido (com justificativa)" as UC_Avaliar
   usecase "Consultar dados de cliente" as UC_Cliente
   usecase "Cadastrar / modificar / excluir cliente" as UC_CRUD
@@ -34,6 +37,7 @@ rectangle "Sistema de Aluguel de Carros" {
 }
 
 Cliente --> UC_Cad
+Cliente --> UC_MeusDados
 Cliente --> UC_Login
 Cliente --> UC_Carros
 Cliente --> UC_Criar
@@ -46,6 +50,8 @@ Agente --> UC_Login
 Agente --> UC_ListaAgente
 Agente --> UC_ModAgente
 Agente --> UC_Analisar
+Agente --> UC_Renda
+UC_Analisar ..> UC_Renda : <<include>>
 Agente --> UC_Avaliar
 Agente --> UC_Cliente
 Agente --> UC_CRUD
@@ -54,13 +60,6 @@ Agente --> UC_ManCarro
 Agente --> UC_Contrato
 Agente --> UC_ConsultarContrato
 AgenteBanco --> UC_Credito
+Agente --> UC_CadAgente
 
-note bottom of UC_Credito
-  O crédito é opcional e concedido
-  pelo agente do banco.
-end note
-note bottom of UC_Avaliar
-  A análise registra parecer e
-  resultado aprovado ou reprovado.
-end note
 @enduml

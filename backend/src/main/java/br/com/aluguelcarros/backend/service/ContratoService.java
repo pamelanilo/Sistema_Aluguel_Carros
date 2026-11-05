@@ -1,5 +1,8 @@
 package br.com.aluguelcarros.backend.service;
 
+import br.com.aluguelcarros.backend.exception.RecursoNaoEncontradoException;
+import br.com.aluguelcarros.backend.exception.RegraNegocioException;
+
 import br.com.aluguelcarros.backend.dto.ContratoAluguelRequest;
 import br.com.aluguelcarros.backend.dto.ContratoCreditoRequest;
 import br.com.aluguelcarros.backend.dto.ContratoAluguelResponse;
@@ -48,20 +51,20 @@ public class ContratoService {
             ContratoAluguelRequest dados, String loginAgente) {
 
         if (dados.getTipo() == null) {
-            throw new RuntimeException("Informe o tipo de contrato (propriedade do cliente, da empresa ou do banco).");
+            throw new RegraNegocioException("Informe o tipo de contrato (propriedade do cliente, da empresa ou do banco).");
         }
 
         Pedido pedido = pedidoRepository.findById(dados.getPedidoId())
                 .orElseThrow(() ->
-                        new RuntimeException("Pedido não encontrado"));
+                        new RecursoNaoEncontradoException("Pedido não encontrado"));
 
         if (pedido.getStatus() != StatusPedido.APROVADO) {
-            throw new RuntimeException(
+            throw new RegraNegocioException(
                     "Somente pedidos aprovados podem gerar contratos");
         }
 
         if (pedido.getContratoAluguel() != null) {
-            throw new RuntimeException(
+            throw new RegraNegocioException(
                     "Este pedido já possui contrato de aluguel");
         }
 
@@ -77,14 +80,16 @@ public class ContratoService {
         switch (dados.getTipo()) {
             case PROPRIEDADE_CLIENTE -> novoProprietario = pedido.getCliente();
             case PROPRIEDADE_BANCO -> novoProprietario = agenteBancoRepository.findByLogin(loginAgente)
-                    .orElseThrow(() -> new RuntimeException(
+                    .orElseThrow(() -> new RegraNegocioException(
                             "Contratos de propriedade do banco exigem um agente bancário autenticado."));
             default -> novoProprietario = pedido.getAgente();
         }
         if (novoProprietario == null) {
-            throw new RuntimeException("Não foi possível determinar o novo proprietário. Avalie o pedido antes de gerar o contrato.");
+            throw new RegraNegocioException("Não foi possível determinar o novo proprietário. Avalie o pedido antes de gerar o contrato.");
         }
         pedido.getAutomovel().setProprietario(novoProprietario);
+
+        pedido.setContratoAluguel(contrato);
 
         return contratoAluguelRepository.save(contrato);
     }
@@ -96,23 +101,23 @@ public class ContratoService {
                 contratoAluguelRepository.findById(
                         dados.getContratoAluguelId())
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new RecursoNaoEncontradoException(
                                 "Contrato de aluguel não encontrado"));
 
         if (contratoAluguel.getContratoCredito() != null) {
-            throw new RuntimeException(
+            throw new RegraNegocioException(
                     "Este contrato já possui crédito associado");
         }
 
         AgenteBanco banco = agenteBancoRepository.findByLogin(loginAgenteBanco)
-                .orElseThrow(() -> new RuntimeException("Somente um agente bancário pode conceder crédito."));
+                .orElseThrow(() -> new RegraNegocioException("Somente um agente bancário pode conceder crédito."));
         if (!banco.getId().equals(dados.getAgenteBancoId())) {
-            throw new RuntimeException("O contrato de crédito deve ser concedido pelo banco autenticado.");
+            throw new RegraNegocioException("O contrato de crédito deve ser concedido pelo banco autenticado.");
         }
         if (dados.getValorConcedido() == null || dados.getValorConcedido().signum() <= 0
                 || dados.getTaxaJuros() == null || dados.getTaxaJuros().signum() < 0
                 || dados.getParcelas() <= 0) {
-            throw new RuntimeException("Informe valor, taxa de juros e quantidade de parcelas válidos.");
+            throw new RegraNegocioException("Informe valor, taxa de juros e quantidade de parcelas válidos.");
         }
 
         ContratoCredito credito = new ContratoCredito();
@@ -122,6 +127,8 @@ public class ContratoService {
         credito.setValorConcedido(dados.getValorConcedido());
         credito.setTaxaJuros(dados.getTaxaJuros());
         credito.setParcelas(dados.getParcelas());
+
+        contratoAluguel.setContratoCredito(credito);
 
         return contratoCreditoRepository.save(credito);
     }
@@ -162,7 +169,7 @@ public class ContratoService {
     public ContratoAluguelResponse buscarContratoAluguel(Long id) {
         ContratoAluguel contrato = contratoAluguelRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new RecursoNaoEncontradoException(
                                 "Contrato de aluguel não encontrado"));
 
         return ContratoAluguelResponse.from(contrato);
@@ -178,7 +185,7 @@ public class ContratoService {
     public ContratoCreditoResponse buscarContratoCredito(Long id) {
         ContratoCredito credito = contratoCreditoRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new RecursoNaoEncontradoException(
                                 "Contrato de crédito não encontrado"));
 
         return ContratoCreditoResponse.from(credito);

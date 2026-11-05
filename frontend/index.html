@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VRUM! — Aluguel de Automóveis</title>
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Aplica o tema antes do React carregar (evita "piscar" claro no modo escuro).
+      (function () {
+        var t = null
+        try { t = localStorage.getItem('vrum-tema') } catch (e) {}
+        if (!t) t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.setAttribute('data-theme', t)
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   </head>

@@ -22,3 +22,22 @@ export function cpfValido(v) {
   }
   return true
 }
+
+export function mascaraCnpj(v) {
+  return soDigitos(v).slice(0, 14)
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+}
+
+export function cnpjValido(v) {
+  const d = soDigitos(v)
+  if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false
+  const calc = (n) => {
+    const pesos = n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    const r = pesos.reduce((s, p, i) => s + Number(d[i]) * p, 0) % 11
+    return r < 2 ? 0 : 11 - r
+  }
+  return calc(12) === Number(d[12]) && calc(13) === Number(d[13])
+}

@@ -34,10 +34,25 @@ Execute com o backend e o frontend ativos e um banco Supabase configurado. Crie 
 | T28 | Cliente | Abrir `#gestao-clientes` na URL | Volta ao Início; telas de gestão não abrem |
 | T29 | Qualquer | Atualizar a página (F5) logado | Sessão e tela atual são mantidas |
 | T30 | Visitante | Digitar CPF e placa nos formulários | Máscaras aplicadas (000.000.000-00 / ABC1D23) |
+| T31 | Cliente | Abrir **Meus dados**, alterar profissão e rendimentos e salvar | Dados atualizados; senha mantida se o campo ficar vazio |
+| T32 | Agente | Abrir **Análise de pedidos** | Cada pedido mostra profissão e renda mensal do cliente |
+| T33 | Agente | Aprovar um 2º pedido do mesmo carro em período sobreposto a um já aprovado | Rejeitado: automóvel reservado |
+| T34 | Agente | Excluir automóvel ou cliente que já tem pedidos | Rejeitado com mensagem clara |
+| T35 | Qualquer | Consultar pedido inexistente (`GET /pedidos/999`) | HTTP 404 |
+
+| T36 | Visitante | Em **Criar conta**, escolher **Empresa** e informar CNPJ válido | Conta criada; login entra como "Agente (empresa)" |
+| T37 | Visitante | Escolher **Banco** com CNPJ inválido ou código diferente de 3 dígitos | Rejeitado com mensagem clara |
+| T38 | Visitante | Cadastrar cliente com login já usado por um agente | Rejeitado: login já utilizado |
+| T39 | Visitante | Abrir **Design System** no topo sem estar logado | Página abre com todas as abas |
+| T40 | Qualquer | Clicar em ☀️/🌙 no topo e atualizar a página | Tema alterna e é mantido após o F5 |
+| T41 | Admin | Subir com `APP_CADASTRO_AGENTES_PUBLICO=false` | Opções Empresa/Banco ficam desabilitadas; API retorna 403 sem token |
+
+## Testes automatizados
+`./mvnw test` executa, além dos testes unitários, o `FluxoAluguelIntegrationTest`, que sobe a aplicação com banco H2 em memória (perfil `it`) e automatiza a maior parte dos casos acima: T01–T27 e T31–T35.
 
 ## Antes da entrega
 - Confirmar que nenhuma senha está no código ou em `.env.example`.
 - Executar o build do frontend (`npm run build`).
 - Executar os testes do backend com JDK 25 (`./mvnw test` ou `.\mvnw.cmd test`): os testes unitários rodam sem banco; o teste de contexto só roda com `SUPABASE_DB_URL` definida.
 - Conferir os endpoints no navegador/DevTools e confirmar que a sessão persiste após atualizar a página.
-- Regenerar os PNGs dos diagramas usando os arquivos `.puml` atualizados.
+- Regenerar os PNGs dos diagramas, se alterar os `.puml`: `java -jar plantuml.jar -tpng -charset UTF-8 docs/diagramas/*.puml`.

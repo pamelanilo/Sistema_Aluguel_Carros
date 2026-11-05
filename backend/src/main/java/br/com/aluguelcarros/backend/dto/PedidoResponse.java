@@ -18,6 +18,9 @@ public class PedidoResponse {
 
     private Long clienteId;
     private String clienteNome;
+    private String clienteProfissao;
+    private BigDecimal clienteRendaTotal;
+    private int clienteQtdRendimentos;
 
     private Long automovelId;
     private String marca;
@@ -38,6 +41,11 @@ public class PedidoResponse {
         if (pedido.getCliente() != null) {
             this.clienteId = pedido.getCliente().getId();
             this.clienteNome = pedido.getCliente().getNome();
+            this.clienteProfissao = pedido.getCliente().getProfissao();
+            this.clienteQtdRendimentos = pedido.getCliente().getRendimentos().size();
+            this.clienteRendaTotal = pedido.getCliente().getRendimentos().stream()
+                    .map(r -> r.getValor() == null ? BigDecimal.ZERO : r.getValor())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
         }
 
         if (pedido.getAutomovel() != null) {
@@ -86,6 +94,18 @@ public class PedidoResponse {
 
     public String getClienteNome() {
         return clienteNome;
+    }
+
+    public String getClienteProfissao() {
+        return clienteProfissao;
+    }
+
+    public BigDecimal getClienteRendaTotal() {
+        return clienteRendaTotal;
+    }
+
+    public int getClienteQtdRendimentos() {
+        return clienteQtdRendimentos;
     }
 
     public Long getAutomovelId() {
